@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Day 3 ✨</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;500&display=swap');
+
+        :root {
+            --bg-deep: #030205;
+            --bg-light: #170a10;
+            --rosegold-light: #e0bfb8;
+            --rosegold-main: #b76e79;
+            --rosegold-glow: rgba(183, 110, 121, 0.6);
+            --text-light: #f3e5e5;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none; -webkit-user-drag: none;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            background-image: radial-gradient(circle at 50% 40%, var(--bg-light) 0%, var(--bg-deep) 80%);
+            color: var(--text-light);
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            height: 100dvh; width: 100vw;
+            position: fixed; top: 0; left: 0;
+            overscroll-behavior: none;
+        }
+
+        /* --- THE CANVAS --- */
+        #constellation-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100dvh;
+            z-index: 10;
+            touch-action: none; /* Crucial for smooth drawing on mobile */
+            transition: opacity 1.5s ease;
+        }
+
+        /* --- UI OVERLAY --- */
+        .instruction-overlay {
+            position: absolute; top: 12%; width: 100%;
+            text-align: center; z-index: 5;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1.6rem, 5vw, 2.2rem); 
+            color: var(--rosegold-light); font-style: italic;
+            text-shadow: 0 0 15px var(--rosegold-glow);
+            pointer-events: none; transition: opacity 1s ease;
+            padding: 0 20px; line-height: 1.4;
+        }
+
+        .sub-instruction {
+            font-family: 'Montserrat', sans-serif; 
+            font-size: clamp(0.65rem, 2.5vw, 0.8rem);
+            letter-spacing: 4px; text-transform: uppercase; color: #804a53;
+            margin-top: 15px; font-style: normal; font-weight: 400;
+            animation: pulseHint 2.5s infinite alternate;
+        }
+
+        /* --- FINAL REVEAL CARD --- */
+        #final-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; z-index: 20;
+            transition: opacity 1.5s ease 0.5s; 
+        }
+        #final-screen.active { opacity: 1; pointer-events: all; }
+
+        .reveal-card {
+            background: linear-gradient(180deg, rgba(20, 10, 12, 0.85) 0%, rgba(10, 5, 6, 0.95) 100%);
+            border: 1px solid rgba(183, 110, 121, 0.3); border-radius: 24px;
+            padding: clamp(30px, 8vw, 50px) clamp(20px, 6vw, 30px);
+            text-align: center; width: 88%; max-width: 400px;
+            max-height: 85dvh; overflow-y: auto; scrollbar-width: none;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(183, 110, 121, 0.15);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            transform: scale(0.9) translateY(20px); 
+            transition: transform 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) 0.5s;
+        }
+        .reveal-card::-webkit-scrollbar { display: none; }
+        #final-screen.active .reveal-card { transform: scale(1) translateY(0); }
+
+        .reveal-title { 
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: clamp(2rem, 8vw, 2.8rem); 
+            color: var(--rosegold-light); font-style: italic; margin-bottom: 15px; 
+        }
+        .reveal-body { 
+            font-size: clamp(0.95rem, 4vw, 1.1rem); 
+            color: #d8c8cb; line-height: 1.8; font-weight: 300; 
+            margin-bottom: 30px; white-space: pre-line;
+        }
+        .reveal-footer { 
+            font-size: 0.75rem; letter-spacing: 4px; color: var(--rosegold-main); 
+            text-transform: uppercase; font-weight: 600; 
+        }
+
+        @keyframes pulseHint { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="instruction-overlay" id="instruction-text">
+        They say our love was written in the stars.
+        <div class="sub-instruction">Draw the connections</div>
+    </div>
+
+    <canvas id="constellation-canvas"></canvas>
+
+    <div id="final-screen">
+        <div class="reveal-card">
+            <h1 class="reveal-title">My Universe</h1>
+            <div style="width: 40px; height: 1px; background: var(--rosegold-main); margin: 0 auto 20px auto;"></div>
+            <p class="reveal-body">
+                Before you, my sky was just a random scattering of moments.
+                
+                But then you walked in, and suddenly everything connected. Every choice, every detour, every star was just leading me to you.
+                
+                Good morning, Pattu.
+            </p>
+            <div class="reveal-footer">Day 3 Unlocked ✨</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('constellation-canvas');
+        const ctx = canvas.getContext('2d');
+        const instructionText = document.getElementById('instruction-text');
+        const finalScreen = document.getElementById('final-screen');
+
+        let width, height, cx, cy, scale;
+        let ambientStars = [];
+        let explosionParticles = [];
+        
+        // --- HEART SHAPE MATH ---
+        // Normalized coordinates for a beautiful heart shape
+        const basePoints = [
+            {x: 0, y: -0.2},     // 0: Top Middle Dip
+            {x: 0.6, y: -0.6},   // 1: Top Right Curve
+            {x: 0.95, y: -0.05}, // 2: Far Right Edge
+            {x: 0, y: 0.85},     // 3: Bottom Point
+            {x: -0.95, y: -0.05},// 4: Far Left Edge
+            {x: -0.6, y: -0.6},  // 5: Top Left Curve
+            {x: 0, y: -0.2}      // 6: Back to Top Middle (closes the loop)
+        ];
+        
+        let points = [];
+        let connectedCount = 1; // Start with the first point already active
+        let isDrawing = false;
+        let pointer = { x: 0, y: 0 };
+        let isWon = false;
+        let glowPhase = 0;
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            cx = width / 2;
+            cy = height / 2 + 30; // Shifted slightly down so it sits below the text
+            
+            // Scale heart based on screen size so it always fits
+            scale = Math.min(width, height) * 0.38;
+            
+            // Calculate actual pixel coordinates
+            points = basePoints.map(p => ({
+                x: cx + p.x * scale,
+                y: cy + p.y * scale
+            }));
+
+            // Generate ambient background stars
+            ambientStars = [];
+            for (let i = 0; i < 120; i++) {
+                ambientStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    r: Math.random() * 1.5,
+                    alpha: Math.random(),
+                    pulsate: Math.random() * 0.02 + 0.005
+                });
+            }
+        }
+
+        window.addEventListener('resize', init);
+        init();
+
+        // --- INTERACTION LOGIC ---
+        function getCoords(e) {
+            return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+        }
+
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('touchstart', handleStart, {passive: false});
+
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, {passive: false});
+
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
+        window.addEventListener('mouseleave', handleEnd);
+
+        function handleStart(e) {
+            if(isWon) return;
+            const pos = getCoords(e);
+            
+            // Check if they touched near the currently active node
+            const target = points[connectedCount - 1];
+            const dist = Math.hypot(pos.x - target.x, pos.y - target.y);
+            
+            // Very forgiving hit radius for mobile fingers
+            if (dist < 60) {
+                isDrawing = true;
+                pointer = pos;
+                if (navigator.vibrate) navigator.vibrate(10);
+            }
+        }
+
+        function handleMove(e) {
+            if(!isDrawing || isWon) return;
+            e.preventDefault(); // Prevent scrolling
+            
+            pointer = getCoords(e);
+            
+            // Check if they reached the NEXT star
+            const target = points[connectedCount];
+            const dist = Math.hypot(pointer.x - target.x, pointer.y - target.y);
+            
+            if (dist < 50) {
+                connectedCount++;
+                if (navigator.vibrate) navigator.vibrate([20, 20]);
+                
+                // If they connected the last star, trigger the win!
+                if (connectedCount === points.length) {
+                    triggerWin();
+                }
+            }
+        }
+
+        function handleEnd() {
+            isDrawing = false;
+        }
+
+        // --- RENDER LOOP ---
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 1. Draw Ambient Stars
+            ambientStars.forEach(s => {
+                s.alpha += s.pulsate;
+                if(s.alpha > 0.8 || s.alpha < 0.1) s.pulsate *= -1;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                ctx.fill();
+            });
+
+            // 2. Draw Explosion Particles (if won)
+            if (explosionParticles.length > 0) {
+                for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                    let p = explosionParticles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    p.alpha -= 0.015;
+                    if (p.alpha <= 0) {
+                        explosionParticles.splice(i, 1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#b76e79';
+                    ctx.fill();
+                    ctx.shadowBlur = 0; // reset
+                }
+            }
+
+            // 3. Draw the Constellation Lines
+            if (connectedCount > 1 || isWon) {
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < connectedCount; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                
+                // Line Style
+                ctx.strokeStyle = '#b76e79';
+                ctx.lineWidth = isWon ? 4 : 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // Glow effect
+                ctx.shadowBlur = isWon ? 30 : 15;
+                ctx.shadowColor = '#b76e79';
+                ctx.stroke();
+                ctx.shadowBlur = 0; // reset
+            }
+
+            // 4. Draw the active drawing line following the finger
+            if (isDrawing && !isWon) {
+                ctx.beginPath();
+                ctx.moveTo(points[connectedCount - 1].x, points[connectedCount - 1].y);
+                ctx.lineTo(pointer.x, pointer.y);
+                ctx.strokeStyle = 'rgba(183, 110, 121, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 10]); // Dashed line while drawing
+                ctx.stroke();
+                ctx.setLineDash([]); // reset
+            }
+
+            // 5. Draw the Stars (Nodes)
+            glowPhase += 0.05;
+            const dynamicGlow = Math.abs(Math.sin(glowPhase)) * 15 + 10;
+
+            for (let i = 0; i < points.length - 1; i++) { // -1 because last point is same as first
+                const p = points[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, isWon ? 6 : 4, 0, Math.PI*2);
+
+                if (isWon) {
+                    ctx.fillStyle = '#fff';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#fff';
+                } else if (i < connectedCount) {
+                    // Already connected nodes
+                    ctx.fillStyle = '#e0bfb8';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#b76e79';
+                } else if (i === connectedCount) {
+                    // The NEXT node to connect to (pulsing)
+                    ctx.fillStyle = '#fff';
+                    ctx.shadowBlur = dynamicGlow;
+                    ctx.shadowColor = '#ffede8';
+                } else {
+                    // Unreached nodes
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fill();
+                ctx.shadowBlur = 0; // reset
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // --- WIN SEQUENCE ---
+        function triggerWin() {
+            isWon = true;
+            isDrawing = false;
+            if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+
+            instructionText.style.opacity = '0';
+
+            // Create Stardust Explosion along the heart outline
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i+1];
+                
+                // Interpolate points along the line for the explosion
+                for(let j=0; j<10; j++) {
+                    const t = j / 10;
+                    const ex = p1.x + (p2.x - p1.x) * t;
+                    const ey = p1.y + (p2.y - p1.y) * t;
+                    
+                    // Generate 3 particles per segment
+                    for(let k=0; k<3; k++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * 3 + 1;
+                        explosionParticles.push({
+                            x: ex, y: ey,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            r: Math.random() * 2 + 1,
+                            alpha: 1
+                        });
+                    }
+                }
+            }
+
+            // Fade out canvas and show final card
+            setTimeout(() => {
+                canvas.style.opacity = '0';
+                finalScreen.classList.add('active');
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
