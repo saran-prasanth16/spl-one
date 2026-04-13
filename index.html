@@ -10,11 +10,12 @@
 
         :root {
             --bg-deep: #050203;
-            --bg-light: #16070a;
+            --bg-light: #1c0a0f;
             --rosegold-light: #e0bfb8;
             --rosegold-main: #b76e79;
             --rosegold-dark: #63333d;
             --text-light: #f3e5e5;
+            --magic-glow: #ff2a5f;
         }
 
         * {
@@ -43,7 +44,7 @@
 
         /* --- UI HEADERS --- */
         .instruction-overlay {
-            position: absolute; top: 10%; width: 100%;
+            position: absolute; top: 8%; width: 100%;
             text-align: center; z-index: 5;
             font-family: 'Cormorant Garamond', serif;
             font-size: clamp(1.8rem, 6vw, 2.5rem); 
@@ -61,58 +62,23 @@
             animation: pulseHint 2s infinite alternate;
         }
 
-        /* --- THE HOURGLASS MECHANICS --- */
+        /* --- THE HEART HOURGLASS --- */
         #hourglass-container {
             position: relative;
-            width: 120px; height: 260px;
+            width: 160px; height: 320px;
             z-index: 20; margin-top: 5vh;
             cursor: grab;
-            transition: transform 1s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s ease;
+            transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease, filter 0.5s ease;
             transform-origin: center center;
+            filter: drop-shadow(0 0 20px rgba(183, 110, 121, 0.3));
         }
-        #hourglass-container:active { cursor: grabbing; }
+        #hourglass-container:active { cursor: grabbing; transform: scale(0.95); }
+        
+        #hourglass-container.inverted { filter: drop-shadow(0 0 40px rgba(255, 42, 95, 0.5)); }
 
-        /* The SVG Glass Frame */
-        .glass-frame {
+        .sand-svg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            fill: rgba(255,255,255,0.02);
-            stroke: rgba(224, 191, 184, 0.5); stroke-width: 2;
-            filter: drop-shadow(0 0 10px rgba(183, 110, 121, 0.2));
             pointer-events: none; z-index: 10;
-        }
-
-        /* The Chambers */
-        .chamber {
-            position: absolute; width: 120px; height: 130px; left: 0;
-            overflow: hidden; z-index: 5;
-        }
-        .chamber-a { top: 0; clip-path: polygon(10% 0, 90% 0, 55% 100%, 45% 100%); }
-        .chamber-b { bottom: 0; clip-path: polygon(45% 0, 55% 0, 90% 100%, 10% 100%); }
-
-        /* The Sand Physics */
-        .sand-fill {
-            position: absolute; width: 100%;
-            background: linear-gradient(to bottom, var(--rosegold-light) 0%, var(--rosegold-main) 100%);
-            box-shadow: 0 0 20px var(--rosegold-main);
-            /* Height is managed by JS */
-        }
-
-        /* Initial State: Upright. Chamber A (Top) is empty. Chamber B (Bottom) is full. */
-        #hourglass-container:not(.inverted) .chamber-a .sand-fill { bottom: 0; height: 0%; }
-        #hourglass-container:not(.inverted) .chamber-b .sand-fill { bottom: 0; height: 100%; }
-
-        /* Inverted State: Hourglass is rotated 180deg. Chamber A is visually at bottom. Chamber B is visually at top. */
-        #hourglass-container.inverted .chamber-a .sand-fill { top: 0; }
-        #hourglass-container.inverted .chamber-b .sand-fill { top: 0; }
-
-        /* The Sand Stream */
-        #sand-stream {
-            position: absolute; width: 2px; height: 0;
-            top: 130px; left: 59px;
-            background: var(--rosegold-light);
-            box-shadow: 0 0 8px var(--rosegold-main);
-            z-index: 8; opacity: 0;
-            transition: opacity 0.3s ease;
         }
 
         /* Supernova Flash Overlay */
@@ -136,7 +102,7 @@
             padding: clamp(30px, 8vw, 50px) clamp(20px, 6vw, 30px);
             text-align: center; width: 88%; max-width: 420px;
             max-height: 85dvh; overflow-y: auto; scrollbar-width: none;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(183, 110, 121, 0.15);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 50px rgba(255, 42, 95, 0.2);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             transform: scale(0.9) translateY(20px); transition: transform 2s cubic-bezier(0.25, 0.8, 0.25, 1) 0.5s;
         }
@@ -147,7 +113,6 @@
         .reveal-body { font-size: clamp(0.95rem, 4vw, 1.1rem); color: #d8c8cb; line-height: 1.8; font-weight: 300; margin-bottom: 30px; white-space: pre-line; }
         .reveal-footer { font-size: 0.75rem; letter-spacing: 4px; color: var(--rosegold-main); text-transform: uppercase; font-weight: 600; }
 
-        /* KEYFRAMES */
         @keyframes pulseHint { 0% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -158,31 +123,58 @@
 
     <div class="instruction-overlay" id="instruction-text">
         The waiting is almost over.
-        <div class="sub-instruction" id="hint-text">Swipe up to flip the glass</div>
+        <div class="sub-instruction" id="hint-text">Swipe up to turn the glass</div>
     </div>
 
     <div id="hourglass-container">
-        <svg class="glass-frame" viewBox="0 0 120 260">
-            <path d="M10,5 L110,5 C110,5 100,100 65,130 L55,130 C20,100 10,5 10,5 Z" />
-            <path d="M55,130 L65,130 C100,160 110,255 110,255 L10,255 C10,255 20,160 55,130 Z" />
-        </svg>
+        <svg class="sand-svg" viewBox="0 0 120 260">
+            <defs>
+                <clipPath id="topHeart">
+                    <path d="M 60 40 C 60 10 110 10 110 50 C 110 85 60 125 60 130 C 60 125 10 85 10 50 C 10 10 60 10 60 40 Z"/>
+                </clipPath>
+                <clipPath id="bottomHeart">
+                    <path d="M 60 220 C 60 250 110 250 110 210 C 110 175 60 135 60 130 C 60 135 10 175 10 210 C 10 250 60 250 60 220 Z"/>
+                </clipPath>
+                
+                <linearGradient id="liquid" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffb3c1"/>
+                    <stop offset="50%" stop-color="#ff2a5f"/>
+                    <stop offset="100%" stop-color="#63333d"/>
+                </linearGradient>
 
-        <div class="chamber chamber-a">
-            <div class="sand-fill" id="sand-a"></div>
-        </div>
-        <div class="chamber chamber-b">
-            <div class="sand-fill" id="sand-b"></div>
-        </div>
-        
-        <div id="sand-stream"></div>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <g clip-path="url(#topHeart)">
+                <rect id="sand-a-rect" x="0" y="0" width="120" height="0" fill="url(#liquid)"/>
+            </g>
+
+            <g clip-path="url(#bottomHeart)">
+                <rect id="sand-b-rect" x="0" y="130" width="120" height="130" fill="url(#liquid)"/>
+            </g>
+
+            <line id="stream-line" x1="60" y1="130" x2="60" y2="130" stroke="url(#liquid)" stroke-width="2.5" opacity="0" filter="url(#glow)"/>
+            
+            <path d="M 60 40 C 60 10 110 10 110 50 C 110 85 60 125 60 130 C 60 125 10 85 10 50 C 10 10 60 10 60 40 Z" fill="rgba(255,255,255,0.02)" stroke="rgba(224, 191, 184, 0.4)" stroke-width="1.5"/>
+            <path d="M 60 220 C 60 250 110 250 110 210 C 110 175 60 135 60 130 C 60 135 10 175 10 210 C 10 250 60 250 60 220 Z" fill="rgba(255,255,255,0.02)" stroke="rgba(224, 191, 184, 0.4)" stroke-width="1.5"/>
+            
+            <ellipse cx="60" cy="130" rx="9" ry="4" fill="#63333d" opacity="0.9"/>
+            <ellipse cx="60" cy="130" rx="6" ry="2" fill="#e0bfb8"/>
+        </svg>
     </div>
 
     <div id="final-screen">
         <div class="reveal-card">
             <h1 class="reveal-title">Almost There</h1>
-            <div style="width: 40px; height: 1px; background: var(--rosegold-main); margin: 0 auto 20px auto;"></div>
+            <div style="width: 40px; height: 1px; background: var(--rosegold-main); margin: 0 auto 20px auto; box-shadow: 0 0 10px var(--rosegold-main);"></div>
             <p class="reveal-body">
-                I’ve been counting down the days, the hours, and every grain of sand until tomorrow. 
+                I’ve poured every ounce of my heart into this journey, counting down every grain of sand until tomorrow. 
                 
                 The wait is finally over. Get ready to celebrate. 
                 
@@ -193,7 +185,7 @@
     </div>
 
     <script>
-        // --- 1. AMBIENT PARTICLES ---
+        // --- 1. AMBIENT PARTICLES (With Heart Physics Support) ---
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
         let width, height, particles = [];
@@ -202,35 +194,59 @@
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
             particles = [];
+            // Spawn initial ambient dust
             for (let i = 0; i < 40; i++) {
                 particles.push({
                     x: Math.random() * width, y: Math.random() * height,
-                    r: Math.random() * 1.5, alpha: Math.random(),
+                    r: Math.random() * 1.5 + 0.5, alpha: Math.random(),
                     v: Math.random() * 0.3 + 0.1, pulsate: Math.random() * 0.02 + 0.01,
-                    isExploding: false, vx: 0, vy: 0
+                    isHeart: false, vx: 0, vy: 0
                 });
             }
         }
         window.addEventListener('resize', initCanvas);
 
+        function drawHeartShape(ctx, x, y, size, color, alpha) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(size, size);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(0, -3, 5, -3, 5, 0);
+            ctx.bezierCurveTo(5, 3, 0, 6, 0, 6);
+            ctx.bezierCurveTo(0, 6, -5, 3, -5, 0);
+            ctx.bezierCurveTo(-5, -3, 0, -3, 0, 0);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.restore();
+        }
+
         function animateParticles() {
             ctx.clearRect(0, 0, width, height);
             particles.forEach(p => {
-                if (p.isExploding) {
+                if (p.isHeart) {
+                    // Explosion physics
                     p.x += p.vx; p.y += p.vy;
-                    p.vx *= 0.95; p.vy *= 0.95; // Friction
+                    p.vx *= 0.96; p.vy *= 0.96; // Air resistance
+                    p.y -= 0.5; // Float upwards slightly after explosion
+                    p.alpha -= 0.005; // Fade out slowly
+                    if (p.alpha < 0) p.alpha = 0;
+                    
+                    drawHeartShape(ctx, p.x, p.y, p.r, '#ff2a5f', p.alpha);
+                    
                 } else {
+                    // Standard floating dust
                     p.y -= p.v;
                     if (p.y < -10) { p.y = height + 10; p.x = Math.random() * width; }
-                }
-                
-                p.alpha += p.pulsate;
-                if (p.alpha >= 0.8 || p.alpha <= 0.1) p.pulsate *= -1;
+                    p.alpha += p.pulsate;
+                    if (p.alpha >= 0.8 || p.alpha <= 0.1) p.pulsate *= -1;
 
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`; 
-                ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`; 
+                    ctx.fill();
+                }
             });
             requestAnimationFrame(animateParticles);
         }
@@ -238,15 +254,15 @@
 
         // --- 2. HOURGLASS FLIP LOGIC ---
         const hgContainer = document.getElementById('hourglass-container');
-        const sandA = document.getElementById('sand-a');
-        const sandB = document.getElementById('sand-b');
-        const stream = document.getElementById('sand-stream');
+        const sandA = document.getElementById('sand-a-rect');
+        const sandB = document.getElementById('sand-b-rect');
+        const stream = document.getElementById('stream-line');
         const instructionText = document.getElementById('instruction-text');
         
         let isFlipped = false;
         let isFinished = false;
         let startY = 0;
-        let sandLevel = 100; // 100 means Chamber B is full, A is empty
+        let sandLevel = 130; // Max height of Chamber B
         let pourInterval;
 
         function getCoords(e) {
@@ -255,7 +271,6 @@
 
         hgContainer.addEventListener('mousedown', handleStart);
         hgContainer.addEventListener('touchstart', handleStart, {passive: false});
-
         window.addEventListener('mouseup', handleEnd);
         window.addEventListener('touchend', handleEnd);
 
@@ -271,77 +286,87 @@
             let endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
             let dy = endY - startY;
 
-            // If user swiped UP aggressively (dy is negative)
-            if (dy < -40) {
-                flipHourglass();
-            }
-            startY = 0; // Reset
+            // Swipe Up Aggressively
+            if (dy < -40) flipHourglass();
+            startY = 0; 
         }
 
         function flipHourglass() {
             isFlipped = true;
-            if(navigator.vibrate) navigator.vibrate([30, 50, 30]); // Heavy clunk
+            if(navigator.vibrate) navigator.vibrate([40, 60, 40]); 
 
-            // Rotate the physical container
+            // Rotate the physical container 180 degrees
             hgContainer.style.transform = 'rotate(180deg)';
+            hgContainer.classList.add('inverted');
+            instructionText.style.opacity = '0';
             
-            // Wait for rotation animation to almost finish before starting pour
-            setTimeout(() => {
-                hgContainer.classList.add('inverted');
-                instructionText.style.opacity = '0';
-                startPouring();
-            }, 800);
+            // Wait for flip to visually complete
+            setTimeout(startPouring, 900);
         }
 
         // --- 3. POURING PHYSICS ---
         function startPouring() {
             stream.style.opacity = '1';
-            stream.style.height = '120px'; // Reaches the bottom
             
-            // Continuous soft haptic hum while pouring
+            // The container is upside down. The physical center is y=130. 
+            // The physical top is y=0. Visually, moving from 130 to 0 looks like dropping downwards.
+            let streamProgress = 130; 
+            
+            // Drop the stream line first
+            let streamDrop = setInterval(() => {
+                streamProgress -= 5;
+                stream.setAttribute('y2', streamProgress);
+                if (streamProgress <= 10) clearInterval(streamDrop);
+            }, 16);
+
+            // Continuous haptic hum
             let hapticInterval = setInterval(() => {
-                if(navigator.vibrate) navigator.vibrate(10);
-            }, 150);
+                if(navigator.vibrate) navigator.vibrate(8);
+            }, 100);
 
             pourInterval = setInterval(() => {
-                sandLevel -= 0.5; // Controls pour speed
+                sandLevel -= 0.6; // Pour speed
                 
-                // Because of .inverted class, B is visually on top, A is visually on bottom
-                sandB.style.height = `${sandLevel}%`; 
-                sandA.style.height = `${100 - sandLevel}%`;
+                // Chamber B (now visually on top) empties by shrinking its height towards y=130
+                sandB.setAttribute('height', Math.max(0, sandLevel));
+                
+                // Chamber A (now visually on bottom) fills by growing its height from y=0
+                sandA.setAttribute('height', 130 - Math.max(0, sandLevel));
 
                 if (sandLevel <= 0) {
                     clearInterval(pourInterval);
                     clearInterval(hapticInterval);
+                    stream.style.opacity = '0';
                     triggerShatter();
                 }
-            }, 30); // 30ms frames
+            }, 30);
         }
 
-        // --- 4. FINALE SHATTER SEQUENCE ---
+        // --- 4. FINALE SHATTER SEQUENCE (Exploding Hearts) ---
         function triggerShatter() {
             isFinished = true;
-            stream.style.opacity = '0';
             
-            if(navigator.vibrate) navigator.vibrate([100, 50, 300]); // Shatter vibration
+            if(navigator.vibrate) navigator.vibrate([100, 50, 400]); 
             
-            // Hide hourglass
             hgContainer.style.opacity = '0';
             setTimeout(() => hgContainer.style.display = 'none', 500);
 
-            // Turn existing particles into an explosion
+            // Spawn 100 exploding heart particles
             const cx = window.innerWidth / 2;
             const cy = window.innerHeight / 2;
             
-            particles.forEach(p => {
-                p.x = cx; p.y = cy;
-                p.isExploding = true;
+            for(let i=0; i<100; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 20 + 5;
-                p.vx = Math.cos(angle) * speed;
-                p.vy = Math.sin(angle) * speed;
-                p.r = Math.random() * 4 + 2; // Make shards bigger
-            });
+                const speed = Math.random() * 25 + 5;
+                particles.push({
+                    x: cx, y: cy,
+                    r: Math.random() * 2 + 1,
+                    alpha: 1,
+                    isHeart: true,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed
+                });
+            }
 
             // Flash the screen
             const overlay = document.getElementById('supernova-overlay');
@@ -349,13 +374,10 @@
             overlay.style.opacity = '1';
 
             setTimeout(() => {
-                // Show Letter
                 document.getElementById('final-screen').classList.add('active');
-                
-                // Fade out flash
-                overlay.style.transition = 'opacity 1.5s ease-out';
+                overlay.style.transition = 'opacity 2s ease-out';
                 overlay.style.opacity = '0';
-            }, 400);
+            }, 600);
         }
     </script>
 </body>
