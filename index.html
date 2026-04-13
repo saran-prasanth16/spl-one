@@ -3,42 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Love Potion ✨</title>
+    <title>Day 14 ✨</title>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;500&display=swap');
 
         :root {
             --bg-deep: #050203;
-            --bg-light: #1c0a0f;
+            --bg-light: #16070a;
             --rosegold-light: #e0bfb8;
             --rosegold-main: #b76e79;
             --rosegold-dark: #63333d;
             --text-light: #f3e5e5;
-            
-            /* Liquid Colors */
-            --liq-1: #804a53; /* Deep dark amber */
-            --liq-2: #b76e79; /* Rose gold */
-            --liq-3: #ff2a5f; /* Magic magenta */
         }
 
         * {
             margin: 0; padding: 0; box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
-            user-select: none; -webkit-user-drag: none;
+            user-select: none; touch-action: none;
         }
 
         body {
             background-color: var(--bg-deep);
-            background-image: radial-gradient(circle at 50% 60%, var(--bg-light) 0%, var(--bg-deep) 100%);
+            background-image: radial-gradient(circle at 50% 50%, var(--bg-light) 0%, var(--bg-deep) 100%);
             color: var(--text-light);
             font-family: 'Montserrat', sans-serif;
             overflow: hidden;
             height: 100dvh; width: 100vw;
             position: fixed; top: 0; left: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* --- BACKGROUND PARTICLES --- */
+        /* --- AMBIENT DUST --- */
         #particle-canvas {
             position: absolute; top: 0; left: 0;
             width: 100vw; height: 100dvh;
@@ -47,106 +43,76 @@
 
         /* --- UI HEADERS --- */
         .instruction-overlay {
-            position: absolute; top: 8%; width: 100%;
+            position: absolute; top: 10%; width: 100%;
             text-align: center; z-index: 5;
             font-family: 'Cormorant Garamond', serif;
             font-size: clamp(1.8rem, 6vw, 2.5rem); 
             color: var(--rosegold-light); font-style: italic;
             text-shadow: 0 0 15px rgba(183, 110, 121, 0.6);
             pointer-events: none; transition: opacity 1s ease;
+            padding: 0 20px; line-height: 1.3;
         }
 
         .sub-instruction {
             font-family: 'Montserrat', sans-serif; 
             font-size: clamp(0.65rem, 2.5vw, 0.8rem);
             letter-spacing: 4px; text-transform: uppercase; color: var(--rosegold-main);
-            margin-top: 10px; font-weight: 400; font-style: normal;
+            margin-top: 15px; font-weight: 400; font-style: normal;
+            animation: pulseHint 2s infinite alternate;
         }
 
-        /* --- THE INGREDIENTS (DROPS) --- */
-        #ingredients-container {
-            position: absolute; top: 22%; width: 100%;
-            display: flex; justify-content: center; gap: clamp(15px, 4vw, 30px);
-            z-index: 30;
+        /* --- THE HOURGLASS MECHANICS --- */
+        #hourglass-container {
+            position: relative;
+            width: 120px; height: 260px;
+            z-index: 20; margin-top: 5vh;
+            cursor: grab;
+            transition: transform 1s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s ease;
+            transform-origin: center center;
+        }
+        #hourglass-container:active { cursor: grabbing; }
+
+        /* The SVG Glass Frame */
+        .glass-frame {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            fill: rgba(255,255,255,0.02);
+            stroke: rgba(224, 191, 184, 0.5); stroke-width: 2;
+            filter: drop-shadow(0 0 10px rgba(183, 110, 121, 0.2));
+            pointer-events: none; z-index: 10;
         }
 
-        /* The floater wrapper allows continuous floating while the inner drop is dragged */
-        .drop-floater {
-            animation: floatDrop 3s ease-in-out infinite alternate;
+        /* The Chambers */
+        .chamber {
+            position: absolute; width: 120px; height: 130px; left: 0;
+            overflow: hidden; z-index: 5;
         }
-        .drop-floater:nth-child(2) { animation-delay: -1s; }
-        .drop-floater:nth-child(3) { animation-delay: -2s; }
+        .chamber-a { top: 0; clip-path: polygon(10% 0, 90% 0, 55% 100%, 45% 100%); }
+        .chamber-b { bottom: 0; clip-path: polygon(45% 0, 55% 0, 90% 100%, 10% 100%); }
 
-        .drop {
-            width: clamp(70px, 20vw, 90px); height: clamp(70px, 20vw, 90px);
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, rgba(183,110,121,0.4) 50%, rgba(99,51,61,0.8) 100%);
-            border: 1px solid rgba(224, 191, 184, 0.5);
-            border-radius: 50% 50% 50% 0; /* Teardrop shape */
-            transform: rotate(-45deg);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 15px rgba(224,191,184,0.3);
-            display: flex; justify-content: center; align-items: center;
-            cursor: grab; touch-action: none;
-            transition: opacity 0.3s ease, transform 0.1s ease;
-        }
-        .drop:active { cursor: grabbing; }
-
-        .drop-label {
-            transform: rotate(45deg); /* Correct the text rotation */
-            font-family: 'Cormorant Garamond', serif; font-size: clamp(0.9rem, 3.5vw, 1.1rem);
-            font-weight: 600; font-style: italic; color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            pointer-events: none;
+        /* The Sand Physics */
+        .sand-fill {
+            position: absolute; width: 100%;
+            background: linear-gradient(to bottom, var(--rosegold-light) 0%, var(--rosegold-main) 100%);
+            box-shadow: 0 0 20px var(--rosegold-main);
+            /* Height is managed by JS */
         }
 
-        /* --- THE FLASK --- */
-        #flask-wrapper {
-            position: absolute; bottom: 12%; left: 50%;
-            transform: translateX(-50%);
-            z-index: 20; display: flex; flex-direction: column; align-items: center;
-            transition: all 1s ease;
-        }
+        /* Initial State: Upright. Chamber A (Top) is empty. Chamber B (Bottom) is full. */
+        #hourglass-container:not(.inverted) .chamber-a .sand-fill { bottom: 0; height: 0%; }
+        #hourglass-container:not(.inverted) .chamber-b .sand-fill { bottom: 0; height: 100%; }
 
-        .flask-neck {
-            width: 40px; height: 70px;
-            background: rgba(255,255,255,0.03);
-            border-left: 3px solid rgba(224,191,184,0.4);
-            border-right: 3px solid rgba(224,191,184,0.4);
-            border-top: 5px solid rgba(224,191,184,0.6);
-            border-radius: 8px 8px 0 0;
-            position: relative; z-index: 2;
-            box-shadow: inset 0 10px 20px rgba(0,0,0,0.5);
-        }
+        /* Inverted State: Hourglass is rotated 180deg. Chamber A is visually at bottom. Chamber B is visually at top. */
+        #hourglass-container.inverted .chamber-a .sand-fill { top: 0; }
+        #hourglass-container.inverted .chamber-b .sand-fill { top: 0; }
 
-        .flask-bulb {
-            width: clamp(160px, 45vw, 220px); height: clamp(160px, 45vw, 220px);
-            background: rgba(255,255,255,0.02);
-            border: 3px solid rgba(224,191,184,0.4);
-            border-radius: 50%;
-            margin-top: -5px; position: relative;
-            overflow: hidden; /* Clips the liquid inside to a circle */
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.8);
-            display: flex; align-items: flex-end;
-            transition: box-shadow 0.5s ease;
-        }
-
-        /* The magical liquid */
-        #liquid {
-            width: 100%; height: 5%; /* Starts almost empty */
-            background: linear-gradient(0deg, var(--liq-1) 0%, #000 100%);
-            transition: height 1.5s cubic-bezier(0.25, 0.8, 0.25, 1), background 1.5s ease;
-            position: relative; border-radius: 0 0 50% 50%;
-            box-shadow: 0 -5px 15px rgba(255,255,255,0.1);
-        }
-
-        /* Animated bubbles container */
-        #bubbles-container {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        .flask-bubble {
-            position: absolute; background: rgba(255,255,255,0.4);
-            border-radius: 50%; bottom: -10px;
-            animation: riseBubble linear forwards;
+        /* The Sand Stream */
+        #sand-stream {
+            position: absolute; width: 2px; height: 0;
+            top: 130px; left: 59px;
+            background: var(--rosegold-light);
+            box-shadow: 0 0 8px var(--rosegold-main);
+            z-index: 8; opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         /* Supernova Flash Overlay */
@@ -168,7 +134,7 @@
             background: linear-gradient(180deg, rgba(20, 10, 12, 0.85) 0%, rgba(10, 5, 6, 0.95) 100%);
             border: 1px solid rgba(183, 110, 121, 0.3); border-radius: 24px;
             padding: clamp(30px, 8vw, 50px) clamp(20px, 6vw, 30px);
-            text-align: center; width: 88%; max-width: 400px;
+            text-align: center; width: 88%; max-width: 420px;
             max-height: 85dvh; overflow-y: auto; scrollbar-width: none;
             box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 40px rgba(183, 110, 121, 0.15);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -177,13 +143,12 @@
         .reveal-card::-webkit-scrollbar { display: none; }
         #final-screen.active .reveal-card { transform: scale(1) translateY(0); }
 
-        .reveal-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 8vw, 2.8rem); color: var(--rosegold-light); font-style: italic; margin-bottom: 15px; }
+        .reveal-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 8vw, 3rem); color: var(--rosegold-light); font-style: italic; margin-bottom: 15px; }
         .reveal-body { font-size: clamp(0.95rem, 4vw, 1.1rem); color: #d8c8cb; line-height: 1.8; font-weight: 300; margin-bottom: 30px; white-space: pre-line; }
         .reveal-footer { font-size: 0.75rem; letter-spacing: 4px; color: var(--rosegold-main); text-transform: uppercase; font-weight: 600; }
 
         /* KEYFRAMES */
-        @keyframes floatDrop { 0% { transform: translateY(0px); } 100% { transform: translateY(-15px); } }
-        @keyframes riseBubble { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-150px) scale(1.5); opacity: 0; } }
+        @keyframes pulseHint { 0% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -192,37 +157,38 @@
     <div id="supernova-overlay"></div>
 
     <div class="instruction-overlay" id="instruction-text">
-        The Perfect Formula
-        <div class="sub-instruction">Drag ingredients into the flask</div>
+        The waiting is almost over.
+        <div class="sub-instruction" id="hint-text">Swipe up to flip the glass</div>
     </div>
 
-    <div id="ingredients-container">
-        <div class="drop-floater"><div class="drop" id="drop-1"><span class="drop-label">Patience</span></div></div>
-        <div class="drop-floater"><div class="drop" id="drop-2"><span class="drop-label">Laughter</span></div></div>
-        <div class="drop-floater"><div class="drop" id="drop-3"><span class="drop-label">Magic</span></div></div>
-    </div>
+    <div id="hourglass-container">
+        <svg class="glass-frame" viewBox="0 0 120 260">
+            <path d="M10,5 L110,5 C110,5 100,100 65,130 L55,130 C20,100 10,5 10,5 Z" />
+            <path d="M55,130 L65,130 C100,160 110,255 110,255 L10,255 C10,255 20,160 55,130 Z" />
+        </svg>
 
-    <div id="flask-wrapper">
-        <div class="flask-neck" id="flask-hit-zone"></div>
-        <div class="flask-bulb" id="flask-bulb">
-            <div id="liquid">
-                <div id="bubbles-container"></div>
-            </div>
+        <div class="chamber chamber-a">
+            <div class="sand-fill" id="sand-a"></div>
         </div>
+        <div class="chamber chamber-b">
+            <div class="sand-fill" id="sand-b"></div>
+        </div>
+        
+        <div id="sand-stream"></div>
     </div>
 
     <div id="final-screen">
         <div class="reveal-card">
-            <h1 class="reveal-title">The Perfect Brew</h1>
+            <h1 class="reveal-title">Almost There</h1>
             <div style="width: 40px; height: 1px; background: var(--rosegold-main); margin: 0 auto 20px auto;"></div>
             <p class="reveal-body">
-                Love isn't just something that happens. It's something you build, drop by drop.
+                I’ve been counting down the days, the hours, and every grain of sand until tomorrow. 
                 
-                Thank you for your patience, your laughter, and the magic you bring into my life every single day.
+                The wait is finally over. Get ready to celebrate. 
                 
-                Good morning, Ammu.
+                Just one more sleep, Ammu.
             </p>
-            <div class="reveal-footer">Unlocked ✨</div>
+            <div class="reveal-footer">Day 14 Unlocked ✨</div>
         </div>
     </div>
 
@@ -240,7 +206,8 @@
                 particles.push({
                     x: Math.random() * width, y: Math.random() * height,
                     r: Math.random() * 1.5, alpha: Math.random(),
-                    v: Math.random() * 0.3 + 0.1, pulsate: Math.random() * 0.02 + 0.01
+                    v: Math.random() * 0.3 + 0.1, pulsate: Math.random() * 0.02 + 0.01,
+                    isExploding: false, vx: 0, vy: 0
                 });
             }
         }
@@ -249,8 +216,14 @@
         function animateParticles() {
             ctx.clearRect(0, 0, width, height);
             particles.forEach(p => {
-                p.y -= p.v;
-                if (p.y < -10) { p.y = height + 10; p.x = Math.random() * width; }
+                if (p.isExploding) {
+                    p.x += p.vx; p.y += p.vy;
+                    p.vx *= 0.95; p.vy *= 0.95; // Friction
+                } else {
+                    p.y -= p.v;
+                    if (p.y < -10) { p.y = height + 10; p.x = Math.random() * width; }
+                }
+                
                 p.alpha += p.pulsate;
                 if (p.alpha >= 0.8 || p.alpha <= 0.1) p.pulsate *= -1;
 
@@ -263,486 +236,126 @@
         }
         initCanvas(); animateParticles();
 
-        // --- 2. CHEMISTRY LAB (DRAG & DROP LOGIC) ---
-        const drops = [document.getElementById('drop-1'), document.getElementById('drop-2'), document.getElementById('drop-3')];
-        const flaskHitZone = document.getElementById('flask-hit-zone');
-        const flaskBulb = document.getElementById('flask-bulb');
-        const liquid = document.getElementById('liquid');
-        const bubblesContainer = document.getElementById('bubbles-container');
+        // --- 2. HOURGLASS FLIP LOGIC ---
+        const hgContainer = document.getElementById('hourglass-container');
+        const sandA = document.getElementById('sand-a');
+        const sandB = document.getElementById('sand-b');
+        const stream = document.getElementById('sand-stream');
+        const instructionText = document.getElementById('instruction-text');
         
-        let ingredientsAdded = 0;
-        let activeDrop = null;
-        let startX = 0, startY = 0;
-        let originalRect = null;
+        let isFlipped = false;
         let isFinished = false;
+        let startY = 0;
+        let sandLevel = 100; // 100 means Chamber B is full, A is empty
+        let pourInterval;
 
         function getCoords(e) {
-            return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+            return e.touches ? e.touches[0].clientY : e.clientY;
         }
 
-        // Attach physics to all 3 drops
-        drops.forEach(drop => {
-            drop.addEventListener('mousedown', handleStart);
-            drop.addEventListener('touchstart', handleStart, {passive: false});
-        });
+        hgContainer.addEventListener('mousedown', handleStart);
+        hgContainer.addEventListener('touchstart', handleStart, {passive: false});
 
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', handleMove, {passive: false});
         window.addEventListener('mouseup', handleEnd);
         window.addEventListener('touchend', handleEnd);
 
         function handleStart(e) {
-            if (isFinished || e.target.classList.contains('consumed')) return;
-            
-            // Allow dragging the text label too
-            activeDrop = e.target.classList.contains('drop-label') ? e.target.parentElement : e.target;
-            
-            originalRect = activeDrop.getBoundingClientRect();
-            const pos = getCoords(e);
-            startX = pos.x;
-            startY = pos.y;
-            
-            activeDrop.style.transition = 'none'; // Follow finger exactly
-            activeDrop.style.zIndex = '100'; // Bring to front
-            
+            if (isFlipped || isFinished) return;
+            startY = getCoords(e);
             if(navigator.vibrate) navigator.vibrate(10);
         }
 
-        function handleMove(e) {
-            if (!activeDrop) return;
-            e.preventDefault(); 
+        function handleEnd(e) {
+            if (isFlipped || isFinished || startY === 0) return;
             
-            const pos = getCoords(e);
-            let dx = pos.x - startX;
-            let dy = pos.y - startY;
-            
-            // Move the drop while maintaining its 45deg rotation
-            activeDrop.style.transform = `translate(${dx}px, ${dy}px) rotate(-45deg)`;
-        }
+            let endY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+            let dy = endY - startY;
 
-        function handleEnd() {
-            if (!activeDrop) return;
-            
-            // Check collision with the flask neck
-            const dropRect = activeDrop.getBoundingClientRect();
-            const flaskRect = flaskHitZone.getBoundingClientRect();
-            
-            // Calculate center of the drop
-            const dropCenterX = dropRect.left + dropRect.width / 2;
-            const dropCenterY = dropRect.top + dropRect.height / 2;
-
-            // Expanded hit area so she doesn't have to be pixel-perfect
-            const isHit = (
-                dropCenterX > flaskRect.left - 50 &&
-                dropCenterX < flaskRect.right + 50 &&
-                dropCenterY > flaskRect.top - 50 &&
-                dropCenterY < flaskRect.bottom + 100
-            );
-
-            if (isHit) {
-                consumeIngredient(activeDrop);
-            } else {
-                // Snap back to top
-                activeDrop.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
-                activeDrop.style.transform = `translate(0px, 0px) rotate(-45deg)`;
-                activeDrop.style.zIndex = '';
+            // If user swiped UP aggressively (dy is negative)
+            if (dy < -40) {
+                flipHourglass();
             }
-            activeDrop = null;
+            startY = 0; // Reset
         }
 
-        function consumeIngredient(drop) {
-            ingredientsAdded++;
-            drop.classList.add('consumed');
-            drop.style.pointerEvents = 'none'; // Prevent dragging again
+        function flipHourglass() {
+            isFlipped = true;
+            if(navigator.vibrate) navigator.vibrate([30, 50, 30]); // Heavy clunk
 
-            // Animate it shrinking into the flask
-            drop.style.transition = 'transform 0.4s ease-in, opacity 0.3s ease 0.1s';
-            drop.style.transform = `translate(0px, 30vh) scale(0) rotate(-45deg)`;
-            drop.style.opacity = '0';
+            // Rotate the physical container
+            hgContainer.style.transform = 'rotate(180deg)';
             
-            if(navigator.vibrate) navigator.vibrate([20, 20]); // Plop!
-
+            // Wait for rotation animation to almost finish before starting pour
             setTimeout(() => {
-                updateFlaskVisuals();
-                createBubbles(15); // Burst of bubbles
-            }, 300);
+                hgContainer.classList.add('inverted');
+                instructionText.style.opacity = '0';
+                startPouring();
+            }, 800);
         }
 
-        // --- 3. ALCHEMY VISUALS ---
-        function updateFlaskVisuals() {
-            let targetHeight = "5%";
-            let targetGradient = "";
-            let targetGlow = "";
-
-            if (ingredientsAdded === 1) {
-                targetHeight = "35%";
-                targetGradient = `linear-gradient(0deg, var(--liq-1) 0%, rgba(183,110,121,0.5) 100%)`;
-                targetGlow = "0 20px 50px rgba(0,0,0,0.9), inset 0 0 40px rgba(128,74,83,0.5)";
-            } 
-            else if (ingredientsAdded === 2) {
-                targetHeight = "70%";
-                targetGradient = `linear-gradient(0deg, var(--liq-2) 0%, rgba(255,42,95,0.4) 100%)`;
-                targetGlow = "0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(183,110,121,0.5), inset 0 0 50px rgba(183,110,121,0.8)";
-            } 
-            else if (ingredientsAdded === 3) {
-                targetHeight = "100%";
-                targetGradient = `linear-gradient(0deg, var(--liq-3) 0%, #fff 100%)`;
-                targetGlow = "0 20px 50px rgba(0,0,0,0.9), 0 0 60px var(--liq-3), inset 0 0 80px var(--liq-3)";
-                triggerFinale();
-            }
-
-            liquid.style.height = targetHeight;
-            liquid.style.background = targetGradient;
-            flaskBulb.style.boxShadow = targetGlow;
-        }
-
-        function createBubbles(count) {
-            for (let i = 0; i < count; i++) {
-                setTimeout(() => {
-                    const bubble = document.createElement('div');
-                    bubble.className = 'flask-bubble';
-                    
-                    const size = Math.random() * 8 + 4;
-                    bubble.style.width = `${size}px`;
-                    bubble.style.height = `${size}px`;
-                    bubble.style.left = `${Math.random() * 80 + 10}%`; // Keep mostly centered
-                    
-                    // Slightly faster if liquid is higher
-                    const speed = Math.random() * 1.5 + (1.5 / ingredientsAdded); 
-                    bubble.style.animationDuration = `${speed}s`;
-                    
-                    bubblesContainer.appendChild(bubble);
-                    
-                    setTimeout(() => bubble.remove(), speed * 1000);
-                }, Math.random() * 500); // Stagger spawn times
-            }
-        }
-
-        // --- 4. FINALE SEQUENCE ---
-        function triggerFinale() {
-            isFinished = true;
+        // --- 3. POURING PHYSICS ---
+        function startPouring() {
+            stream.style.opacity = '1';
+            stream.style.height = '120px'; // Reaches the bottom
             
-            // Constantly spawn bubbles for boiling effect
-            const boilInterval = setInterval(() => createBubbles(5), 200);
-            
-            document.getElementById('instruction-text').style.opacity = '0';
+            // Continuous soft haptic hum while pouring
+            let hapticInterval = setInterval(() => {
+                if(navigator.vibrate) navigator.vibrate(10);
+            }, 150);
 
-            setTimeout(() => {
-                if(navigator.vibrate) navigator.vibrate([100, 50, 200]); 
-                clearInterval(boilInterval);
+            pourInterval = setInterval(() => {
+                sandLevel -= 0.5; // Controls pour speed
                 
-                // Supernova flash
-                const overlay = document.getElementById('supernova-overlay');
-                overlay.style.transition = 'opacity 0.2s ease-in';
-                overlay.style.opacity = '1';
+                // Because of .inverted class, B is visually on top, A is visually on bottom
+                sandB.style.height = `${sandLevel}%`; 
+                sandA.style.height = `${100 - sandLevel}%`;
 
-                setTimeout(() => {
-                    // Hide game elements
-                    document.getElementById('ingredients-container').style.display = 'none';
-                    document.getElementById('flask-wrapper').style.display = 'none';
-                    
-                    document.getElementById('final-screen').classList.add('active');
-                    particles.forEach(p => p.v *= 6); // Speed up ambient dust
-                    
-                    // Fade out flash
-                    overlay.style.transition = 'opacity 1.5s ease-out';
-                    overlay.style.opacity = '0';
-                }, 400);
-
-            }, 1800); // Wait 1.8s for the liquid to finish filling and boiling
-        }
-    </script>
-</body>
-</html>
-    </div>
-
-    <canvas id="constellation-canvas"></canvas>
-
-    <div id="final-screen">
-        <div class="reveal-card">
-            <h1 class="reveal-title">My Honeybun</h1>
-            <div style="width: 40px; height: 1px; background: var(--rosegold-main); margin: 0 auto 20px auto;"></div>
-            <p class="reveal-body">
-                I’ve been thinking about this…
-                and I don’t think there was a single moment
-                where everything suddenly changed.
-
-                It wasn’t dramatic.
-                It wasn’t planned.
-                It just… happened.
-
-                Somewhere between random conversations
-                and normal days,
-                you became someone I started looking forward to.
-                And now, without even realizing it,
-                you’ve become a small but important part of my everyday life.
-                
-                Good morning, Pattu.
-            </p>
-            <div class="reveal-footer">Day 3 Unlocked ✨</div>
-        </div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('constellation-canvas');
-        const ctx = canvas.getContext('2d');
-        const instructionText = document.getElementById('instruction-text');
-        const finalScreen = document.getElementById('final-screen');
-
-        let width, height, cx, cy, scale;
-        let ambientStars = [];
-        let explosionParticles = [];
-        
-        // --- HEART SHAPE MATH ---
-        // Normalized coordinates for a beautiful heart shape
-        const basePoints = [
-            {x: 0, y: -0.2},     // 0: Top Middle Dip
-            {x: 0.6, y: -0.6},   // 1: Top Right Curve
-            {x: 0.95, y: -0.05}, // 2: Far Right Edge
-            {x: 0, y: 0.85},     // 3: Bottom Point
-            {x: -0.95, y: -0.05},// 4: Far Left Edge
-            {x: -0.6, y: -0.6},  // 5: Top Left Curve
-            {x: 0, y: -0.2}      // 6: Back to Top Middle (closes the loop)
-        ];
-        
-        let points = [];
-        let connectedCount = 1; // Start with the first point already active
-        let isDrawing = false;
-        let pointer = { x: 0, y: 0 };
-        let isWon = false;
-        let glowPhase = 0;
-
-        function init() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            cx = width / 2;
-            cy = height / 2 + 30; // Shifted slightly down so it sits below the text
-            
-            // Scale heart based on screen size so it always fits
-            scale = Math.min(width, height) * 0.38;
-            
-            // Calculate actual pixel coordinates
-            points = basePoints.map(p => ({
-                x: cx + p.x * scale,
-                y: cy + p.y * scale
-            }));
-
-            // Generate ambient background stars
-            ambientStars = [];
-            for (let i = 0; i < 120; i++) {
-                ambientStars.push({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    r: Math.random() * 1.5,
-                    alpha: Math.random(),
-                    pulsate: Math.random() * 0.02 + 0.005
-                });
-            }
-        }
-
-        window.addEventListener('resize', init);
-        init();
-
-        // --- INTERACTION LOGIC ---
-        function getCoords(e) {
-            return e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
-        }
-
-        canvas.addEventListener('mousedown', handleStart);
-        canvas.addEventListener('touchstart', handleStart, {passive: false});
-
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', handleMove, {passive: false});
-
-        window.addEventListener('mouseup', handleEnd);
-        window.addEventListener('touchend', handleEnd);
-        window.addEventListener('mouseleave', handleEnd);
-
-        function handleStart(e) {
-            if(isWon) return;
-            const pos = getCoords(e);
-            
-            // Check if they touched near the currently active node
-            const target = points[connectedCount - 1];
-            const dist = Math.hypot(pos.x - target.x, pos.y - target.y);
-            
-            // Very forgiving hit radius for mobile fingers
-            if (dist < 60) {
-                isDrawing = true;
-                pointer = pos;
-                if (navigator.vibrate) navigator.vibrate(10);
-            }
-        }
-
-        function handleMove(e) {
-            if(!isDrawing || isWon) return;
-            e.preventDefault(); // Prevent scrolling
-            
-            pointer = getCoords(e);
-            
-            // Check if they reached the NEXT star
-            const target = points[connectedCount];
-            const dist = Math.hypot(pointer.x - target.x, pointer.y - target.y);
-            
-            if (dist < 50) {
-                connectedCount++;
-                if (navigator.vibrate) navigator.vibrate([20, 20]);
-                
-                // If they connected the last star, trigger the win!
-                if (connectedCount === points.length) {
-                    triggerWin();
+                if (sandLevel <= 0) {
+                    clearInterval(pourInterval);
+                    clearInterval(hapticInterval);
+                    triggerShatter();
                 }
-            }
+            }, 30); // 30ms frames
         }
 
-        function handleEnd() {
-            isDrawing = false;
-        }
-
-        // --- RENDER LOOP ---
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
+        // --- 4. FINALE SHATTER SEQUENCE ---
+        function triggerShatter() {
+            isFinished = true;
+            stream.style.opacity = '0';
             
-            // 1. Draw Ambient Stars
-            ambientStars.forEach(s => {
-                s.alpha += s.pulsate;
-                if(s.alpha > 0.8 || s.alpha < 0.1) s.pulsate *= -1;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
-                ctx.fill();
+            if(navigator.vibrate) navigator.vibrate([100, 50, 300]); // Shatter vibration
+            
+            // Hide hourglass
+            hgContainer.style.opacity = '0';
+            setTimeout(() => hgContainer.style.display = 'none', 500);
+
+            // Turn existing particles into an explosion
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            
+            particles.forEach(p => {
+                p.x = cx; p.y = cy;
+                p.isExploding = true;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 20 + 5;
+                p.vx = Math.cos(angle) * speed;
+                p.vy = Math.sin(angle) * speed;
+                p.r = Math.random() * 4 + 2; // Make shards bigger
             });
 
-            // 2. Draw Explosion Particles (if won)
-            if (explosionParticles.length > 0) {
-                for (let i = explosionParticles.length - 1; i >= 0; i--) {
-                    let p = explosionParticles[i];
-                    p.x += p.vx; p.y += p.vy;
-                    p.alpha -= 0.015;
-                    if (p.alpha <= 0) {
-                        explosionParticles.splice(i, 1);
-                        continue;
-                    }
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-                    ctx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`;
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#b76e79';
-                    ctx.fill();
-                    ctx.shadowBlur = 0; // reset
-                }
-            }
+            // Flash the screen
+            const overlay = document.getElementById('supernova-overlay');
+            overlay.style.transition = 'opacity 0.2s ease-in';
+            overlay.style.opacity = '1';
 
-            // 3. Draw the Constellation Lines
-            if (connectedCount > 1 || isWon) {
-                ctx.beginPath();
-                ctx.moveTo(points[0].x, points[0].y);
-                for (let i = 1; i < connectedCount; i++) {
-                    ctx.lineTo(points[i].x, points[i].y);
-                }
-                
-                // Line Style
-                ctx.strokeStyle = '#b76e79';
-                ctx.lineWidth = isWon ? 4 : 2;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                // Glow effect
-                ctx.shadowBlur = isWon ? 30 : 15;
-                ctx.shadowColor = '#b76e79';
-                ctx.stroke();
-                ctx.shadowBlur = 0; // reset
-            }
-
-            // 4. Draw the active drawing line following the finger
-            if (isDrawing && !isWon) {
-                ctx.beginPath();
-                ctx.moveTo(points[connectedCount - 1].x, points[connectedCount - 1].y);
-                ctx.lineTo(pointer.x, pointer.y);
-                ctx.strokeStyle = 'rgba(183, 110, 121, 0.6)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 10]); // Dashed line while drawing
-                ctx.stroke();
-                ctx.setLineDash([]); // reset
-            }
-
-            // 5. Draw the Stars (Nodes)
-            glowPhase += 0.05;
-            const dynamicGlow = Math.abs(Math.sin(glowPhase)) * 15 + 10;
-
-            for (let i = 0; i < points.length - 1; i++) { // -1 because last point is same as first
-                const p = points[i];
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, isWon ? 6 : 4, 0, Math.PI*2);
-
-                if (isWon) {
-                    ctx.fillStyle = '#fff';
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = '#fff';
-                } else if (i < connectedCount) {
-                    // Already connected nodes
-                    ctx.fillStyle = '#e0bfb8';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#b76e79';
-                } else if (i === connectedCount) {
-                    // The NEXT node to connect to (pulsing)
-                    ctx.fillStyle = '#fff';
-                    ctx.shadowBlur = dynamicGlow;
-                    ctx.shadowColor = '#ffede8';
-                } else {
-                    // Unreached nodes
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.shadowBlur = 0;
-                }
-
-                ctx.fill();
-                ctx.shadowBlur = 0; // reset
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
-
-        // --- WIN SEQUENCE ---
-        function triggerWin() {
-            isWon = true;
-            isDrawing = false;
-            if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-
-            instructionText.style.opacity = '0';
-
-            // Create Stardust Explosion along the heart outline
-            for (let i = 0; i < points.length - 1; i++) {
-                const p1 = points[i];
-                const p2 = points[i+1];
-                
-                // Interpolate points along the line for the explosion
-                for(let j=0; j<10; j++) {
-                    const t = j / 10;
-                    const ex = p1.x + (p2.x - p1.x) * t;
-                    const ey = p1.y + (p2.y - p1.y) * t;
-                    
-                    // Generate 3 particles per segment
-                    for(let k=0; k<3; k++) {
-                        const angle = Math.random() * Math.PI * 2;
-                        const speed = Math.random() * 3 + 1;
-                        explosionParticles.push({
-                            x: ex, y: ey,
-                            vx: Math.cos(angle) * speed,
-                            vy: Math.sin(angle) * speed,
-                            r: Math.random() * 2 + 1,
-                            alpha: 1
-                        });
-                    }
-                }
-            }
-
-            // Fade out canvas and show final card
             setTimeout(() => {
-                canvas.style.opacity = '0';
-                finalScreen.classList.add('active');
-            }, 1200);
+                // Show Letter
+                document.getElementById('final-screen').classList.add('active');
+                
+                // Fade out flash
+                overlay.style.transition = 'opacity 1.5s ease-out';
+                overlay.style.opacity = '0';
+            }, 400);
         }
     </script>
 </body>
