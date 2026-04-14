@@ -3,458 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Day 15 ✨</title>
+    <title>Forever 🎵</title>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&family=Caveat:ital@1&display=swap');
 
         :root {
-            --bg-deep: #050203;
-            --bg-light: #16070a;
-            --rosegold-light: #e0bfb8;
-            --rosegold-main: #b76e79;
-            --rosegold-dark: #63333d;
-            --gold-spark: #ffcf70;
-            --text-light: #f3e5e5;
+            /* Dynamic Hue for Stage Lighting */
+            --bg-hue: 340;
+            --bg-deep: hsl(var(--bg-hue), 60%, 4%);
+            --bg-light: hsl(var(--bg-hue), 50%, 15%);
+            
+            --text-main: #ffffff;
+            --text-muted: #e0bfb8;
+            --accent: #ff758c;
+            --accent-glow: rgba(255, 117, 140, 0.6);
+            --rosegold: #b76e79;
         }
 
         * {
             margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none; touch-action: none;
+            user-select: none;
         }
 
         body {
             background-color: var(--bg-deep);
-            background-image: radial-gradient(circle at 50% 50%, var(--bg-light) 0%, var(--bg-deep) 100%);
-            color: var(--text-light);
-            font-family: 'Montserrat', sans-serif;
-            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 20%, var(--bg-light) 0%, var(--bg-deep) 80%);
             height: 100dvh; width: 100vw;
-            position: fixed; top: 0; left: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            perspective: 1000px; /* Required for 3D Parallax */
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: var(--text-main);
+            transition: background-color 0.5s ease, background-image 0.5s ease;
         }
 
-        #particle-canvas {
+        /* --- HARDWARE ACCELERATED CANVASES --- */
+        #particle-canvas, #visualizer-canvas {
             position: absolute; top: 0; left: 0;
             width: 100vw; height: 100dvh;
             z-index: 1; pointer-events: none;
-            /* Parallax shifting */
-            transition: transform 0.1s ease-out;
+        }
+        #visualizer-canvas { z-index: 3; opacity: 0.6; filter: drop-shadow(0 0 10px var(--accent)); }
+
+        #phone-container {
+            width: 100%; max-width: 430px; height: 100%; max-height: 932px;
+            position: relative; display: flex; flex-direction: column;
+            padding: 40px 25px; z-index: 10;
         }
 
-        /* --- UI HEADERS --- */
-        .instruction-overlay {
-            position: absolute; top: 8%; width: 100%;
-            text-align: center; z-index: 5;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(1.8rem, 6vw, 2.5rem); 
-            color: var(--rosegold-light); font-style: italic;
-            text-shadow: 0 0 15px rgba(183, 110, 121, 0.6);
-            pointer-events: none; transition: opacity 0.5s ease;
-            padding: 0 20px; line-height: 1.3;
+        .header {
+            text-align: center; font-size: 0.85rem; font-weight: 500;
+            color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase;
+            margin-bottom: 50px; animation: fadeIn 2s ease;
         }
 
-        .sub-instruction {
-            font-family: 'Montserrat', sans-serif; 
-            font-size: clamp(0.65rem, 2.5vw, 0.8rem);
-            letter-spacing: 4px; text-transform: uppercase; color: var(--rosegold-main);
-            margin-top: 15px; font-weight: 400; font-style: normal;
-            animation: pulseHint 2s infinite alternate;
-        }
-
-        /* --- MEMORY ECHO TEXT --- */
-        #memory-container {
-            position: absolute; top: 22%; width: 100%;
-            display: flex; flex-direction: column; align-items: center;
-            z-index: 2; pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.5s ease;
-            transform: scale(0.9); opacity: 0;
-        }
-
-        #memory-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: clamp(1.8rem, 6vw, 2.2rem); 
-            color: var(--gold-spark); font-style: italic;
-            text-shadow: 0 0 15px rgba(255, 207, 112, 0.3);
-            margin-bottom: 5px;
-        }
-
-        #memory-detail {
-            font-family: 'Montserrat', sans-serif;
-            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
-            color: var(--rosegold-light); font-weight: 300;
-            letter-spacing: 2px; opacity: 0.8;
-            text-align: center; padding: 0 20px;
-        }
-
-        /* --- THE INFINITY DIAL --- */
-        #dial-wrapper {
-            position: relative; z-index: 20;
-            width: clamp(260px, 75vw, 340px); height: clamp(260px, 75vw, 340px);
-            margin-top: 8vh;
+        /* --- 3D RECORD PLAYER --- */
+        .album-art-container {
+            width: 100%; aspect-ratio: 1/1;
             display: flex; justify-content: center; align-items: center;
-            transition: opacity 1s ease, transform 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin-bottom: 40px; position: relative;
+            perspective: 1000px;
         }
 
-        #nodes-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;
+        /* 3D Flip Wrapper */
+        .vinyl-flipper {
+            width: 85%; height: 85%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 5;
+            cursor: grab;
         }
+        .vinyl-flipper:active { cursor: grabbing; }
 
-        .dial-node {
-            position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; border-radius: 50%;
-            background: rgba(183, 110, 121, 0.2); transform-origin: center; margin-top: -4px; margin-left: -4px;
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-        }
-        .dial-node.lit { background: var(--gold-spark); box-shadow: 0 0 10px var(--gold-spark), 0 0 20px rgba(255, 207, 112, 0.5); }
-
-        .vault-wheel {
-            position: absolute; width: 88%; height: 88%; border-radius: 50%;
-            background: radial-gradient(circle, #1a0a0d 0%, #0a0305 100%);
-            border: 2px solid rgba(183, 110, 121, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px rgba(183, 110, 121, 0.1);
+        /* The Front & Back Faces */
+        .vinyl-front, .vinyl-back {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(#111, #222, #111, #333, #111, #222, #111);
+            border: 2px solid #050505;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px #000;
             display: flex; justify-content: center; align-items: center;
-            background-image: repeating-conic-gradient(from 0deg, transparent 0deg, transparent 4deg, rgba(183, 110, 121, 0.05) 4deg, rgba(183, 110, 121, 0.05) 8deg);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        
+        .vinyl-front { transform: rotateY(0deg); }
+        .vinyl-back { 
+            transform: rotateY(180deg); 
+            background: conic-gradient(#1a1a1a, #2a2a2a, #1a1a1a, #3a3a3a, #1a1a1a);
+        }
+
+        /* Vinyl Grooves */
+        .vinyl-front::before, .vinyl-back::before {
+            content: ''; position: absolute; width: 90%; height: 90%; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.05); pointer-events: none;
+        }
+        .vinyl-front::after, .vinyl-back::after {
+            content: ''; position: absolute; width: 70%; height: 70%; border-radius: 50%;
+            border: 1px dashed rgba(255,255,255,0.08); pointer-events: none;
+        }
+
+        /* Center Label - Front */
+        .vinyl-label {
+            width: 35%; height: 35%; border-radius: 50%;
+            background: linear-gradient(135deg, var(--rosegold) 0%, var(--accent) 100%);
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8); z-index: 2; border: 2px solid #111;
+            pointer-events: none;
+        }
+        .vinyl-label-inner { font-size: 2rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); }
+
+        /* Center Label - Back (The Secret Note) */
+        .b-side-note {
+            width: 55%; height: 55%; border-radius: 50%;
+            background: #f4ecd8;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5); z-index: 2;
+            border: 1px solid #111;
+        }
+        .b-side-text {
+            font-family: 'Caveat', cursive; font-size: 1.2rem;
+            color: #2b2b2b; font-weight: bold; line-height: 1.2;
+            transform: rotate(-10deg);
+        }
+
+        /* Flip Button */
+        .flip-btn {
+            position: absolute; top: 0; right: 0;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-main); font-size: 0.7rem; letter-spacing: 2px;
+            padding: 8px 15px; border-radius: 20px; text-transform: uppercase;
+            cursor: pointer; z-index: 20; backdrop-filter: blur(5px);
+            transition: background 0.3s;
+        }
+        .flip-btn:active { background: rgba(255,255,255,0.3); }
+
+        /* Stylus Arm */
+        .stylus-arm {
+            position: absolute; top: -10%; right: -5%; width: 40px; height: 160px;
+            transform-origin: top center; transform: rotate(-25deg);
+            transition: transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10; pointer-events: none;
+            filter: drop-shadow( -10px 20px 10px rgba(0,0,0,0.6) );
+        }
+        .album-art-container.playing .stylus-arm { transform: rotate(22deg); }
+        
+        .stylus-base {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 30px; height: 30px; border-radius: 50%;
+            background: radial-gradient(circle, #ddd 0%, #777 100%); border: 2px solid #222;
+        }
+        .stylus-rod {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 120px; background: linear-gradient(90deg, #999 0%, #fff 50%, #666 100%); border-radius: 3px;
+        }
+        .stylus-head {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 15px; height: 25px; border-radius: 3px; background: #222; border-top: 2px solid var(--rosegold);
+        }
+
+        /* --- FROSTED GLASS UI WRAPPER --- */
+        .player-ui {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 30px; padding: 25px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; flex: 1;
             z-index: 15;
         }
 
-        .indicator {
-            position: absolute; top: -5%; left: 50%; transform: translateX(-50%); width: 0; height: 0;
-            border-left: 10px solid transparent; border-right: 10px solid transparent;
-            border-top: 15px solid var(--rosegold-main); filter: drop-shadow(0 0 10px var(--rosegold-main)); z-index: 25;
+        /* Track Info */
+        .track-info { text-align: center; margin-bottom: 25px; pointer-events: none; }
+        .track-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 600; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .track-artist { font-size: 0.9rem; color: var(--accent); font-weight: 500; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Progress Bar */
+        .progress-container { margin-bottom: 20px; pointer-events: none; }
+        .progress-bar-bg {
+            width: 100%; height: 5px; background-color: rgba(255,255,255,0.1);
+            border-radius: 10px; overflow: hidden; position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--rosegold), var(--accent));
+            border-radius: 10px; transition: width 0.1s linear;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        .time-info {
+            display: flex; justify-content: space-between;
+            font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; font-variant-numeric: tabular-nums;
         }
 
-        /* --- THE CENTER BUTTON --- */
-        .dial-center {
-            position: absolute; width: 48%; height: 48%; border-radius: 50%; background: #050203;
-            border: 2px solid var(--rosegold-dark); box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(255, 255, 255, 0.05);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 30; overflow: hidden; transition: all 0.5s ease; pointer-events: none;
+        /* Controls */
+        .controls {
+            display: flex; justify-content: center; align-items: center; gap: 35px; margin-bottom: 20px;
         }
-
-        .dial-center.push-mode {
-            cursor: pointer; border-color: var(--gold-spark);
-            box-shadow: 0 0 30px rgba(255,207,112,0.4), inset 0 0 20px rgba(255,207,112,0.2);
-            animation: pulsePush 1.5s infinite alternate; pointer-events: all;
-        }
+        .ctrl-btn { background: none; border: none; color: var(--text-main); cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
-        .dial-center.holding {
-            animation: shake 0.5s infinite;
-            box-shadow: 0 0 80px var(--gold-spark), inset 0 0 50px var(--gold-spark);
-            transition: box-shadow 3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        .play-btn {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--rosegold) 0%, var(--accent) 100%);
+            color: #fff; box-shadow: 0 10px 25px var(--accent-glow);
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s ease;
         }
+        .play-btn:active { transform: scale(0.9); box-shadow: 0 5px 15px var(--accent-glow); }
+        .play-btn svg { width: 28px; height: 28px; fill: currentColor; }
+        .side-btn svg { width: 22px; height: 22px; fill: currentColor; opacity: 0.6; transition: opacity 0.2s; }
+        .side-btn:active svg { opacity: 1; }
 
-        #push-ring {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: var(--gold-spark);
-            opacity: 0.4; transform: scale(0); z-index: 1; pointer-events: none; transition: transform 0s, opacity 0s; 
+        /* Synchronized Lyrics */
+        .lyrics-container {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; pointer-events: none;
         }
-        .dial-center.holding #push-ring { transform: scale(1); transition: transform 3s linear; }
-
-        #memory-icon {
-            position: absolute; font-size: 5rem; opacity: 0.03; filter: blur(2px); z-index: 2; pointer-events: none;
-            transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+        .lyric-text {
+            font-family: 'Playfair Display', serif; font-size: 1.3rem; line-height: 1.5;
+            color: var(--text-main); font-style: italic; text-align: center;
+            position: absolute; width: 100%;
+            opacity: 0; filter: blur(5px); transform: translateY(15px);
+            transition: opacity 1s ease, filter 1s ease, transform 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
         }
-        .dial-center.holding #memory-icon { opacity: 0.6; filter: blur(0px); transform: scale(1.2); }
+        .lyric-text.active { opacity: 1; filter: blur(0px); transform: translateY(0); }
 
-        .day-label, .day-number { z-index: 10; pointer-events: none; }
-        .day-label { font-size: 0.6rem; letter-spacing: 4px; text-transform: uppercase; color: var(--rosegold-main); margin-bottom: 5px; }
-        .day-number {
-            font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; color: var(--text-light); font-weight: 600; line-height: 1;
-            text-shadow: 0 0 15px rgba(183, 110, 121, 0.5); transition: color 0.3s ease, text-shadow 0.3s ease, font-size 0.3s ease; text-align: center;
-        }
-
-        /* Supernova Overlay */
-        #supernova-overlay {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
-            background-color: #fff; opacity: 0; pointer-events: none; z-index: 80;
-        }
-
-        /* --- FINAL REVEAL CARD (PARALLAX ENABLED) --- */
-        #final-screen {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; z-index: 100;
-            transition: opacity 2s ease 0.5s; 
-            perspective: 1200px; /* Gives 3D depth to the card */
-        }
-        #final-screen.active { opacity: 1; pointer-events: all; }
-
-        .reveal-card {
-            background: linear-gradient(180deg, rgba(20, 10, 12, 0.85) 0%, rgba(10, 5, 6, 0.95) 100%);
-            border: 1px solid rgba(255, 207, 112, 0.4); border-radius: 24px;
-            padding: clamp(30px, 8vw, 50px) clamp(20px, 6vw, 30px);
-            text-align: center; width: 88%; max-width: 450px;
-            max-height: 85dvh; overflow-y: auto; scrollbar-width: none;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255, 207, 112, 0.15);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            /* Initial pop-in transform. Will be overwritten by JS Gyroscope */
-            transform: scale(0.9) translateY(20px) rotateX(0deg) rotateY(0deg); 
-            transition: transform 0.2s ease-out; /* Fast transition for smooth gyro tracking */
-            will-change: transform;
-            transform-style: preserve-3d;
-        }
-        .reveal-card::-webkit-scrollbar { display: none; }
-
-        .reveal-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem, 8vw, 3.5rem); color: var(--gold-spark); font-style: italic; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255, 207, 112, 0.4); transform: translateZ(30px); }
-        .reveal-body { font-size: clamp(0.95rem, 4vw, 1.1rem); color: #d8c8cb; line-height: 1.8; font-weight: 300; margin-bottom: 30px; transform: translateZ(20px); }
-        .reveal-footer { font-size: 0.8rem; letter-spacing: 4px; color: var(--rosegold-main); text-transform: uppercase; font-weight: 600; transform: translateZ(40px); }
-
-        /* The Calligraphy Effect Spans */
-        .calligraphy-word {
-            opacity: 0; filter: blur(4px);
-            transition: opacity 0.6s ease, filter 0.6s ease;
-        }
-
-        /* Animations */
-        @keyframes pulseHint { 0% { opacity: 0.4; } 100% { opacity: 1; } }
-        @keyframes pulsePush { 0% { box-shadow: 0 0 20px rgba(255,207,112,0.3), inset 0 0 10px rgba(255,207,112,0.1); } 100% { box-shadow: 0 0 50px rgba(255,207,112,0.7), inset 0 0 30px rgba(255,207,112,0.4); } }
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-1deg); } 50% { transform: translate(-2px, 0px) rotate(1deg); } 75% { transform: translate(2px, 1px) rotate(0deg); } 100% { transform: translate(1px, -1px) rotate(-1deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <audio id="voice-memo" src="voice.mp3" preload="auto"></audio>
-
     <canvas id="particle-canvas"></canvas>
-    <div id="supernova-overlay"></div>
+    
+    <div id="phone-container">
+        <div class="header">It's Honeybun's Birthday</div>
 
-    <div class="instruction-overlay" id="instruction-text">
-        Every day brought us here.
-        <div class="sub-instruction" id="hint-text">Turn the dial to today</div>
-    </div>
+        <div class="album-art-container" id="art-container">
+            <canvas id="visualizer-canvas"></canvas>
+            
+            <button class="flip-btn" id="flip-btn">Flip B-Side</button>
+            
+            <div class="vinyl-flipper" id="vinyl-flipper">
+                <div class="vinyl-front">
+                    <div class="vinyl-label"><div class="vinyl-label-inner">❤️</div></div>
+                </div>
+                <div class="vinyl-back">
+                    <div class="b-side-note">
+                        <div class="b-side-text">A love that transcends time and code.<br><br>Yours forever.</div>
+                    </div>
+                </div>
+            </div>
 
-    <div id="memory-container">
-        <div id="memory-title"></div>
-        <div id="memory-detail"></div>
-    </div>
-
-    <div id="dial-wrapper">
-        <div class="indicator"></div>
-        <div id="nodes-container"></div>
-        <div class="vault-wheel" id="vault-wheel"></div>
-
-        <div class="dial-center" id="dial-center">
-            <div id="memory-icon"></div>
-            <div id="push-ring"></div>
-            <div class="day-label" id="day-label">Day</div>
-            <div class="day-number" id="day-display">0</div>
+            <div class="stylus-arm">
+                <div class="stylus-base"></div>
+                <div class="stylus-rod"></div>
+                <div class="stylus-head"></div>
+            </div>
         </div>
-    </div>
 
-    <div id="final-screen">
-        <div class="reveal-card" id="reveal-card">
-            <h1 class="reveal-title">Happy Birthday</h1>
-            <div style="width: 40px; height: 1px; background: var(--gold-spark); margin: 0 auto 20px auto; box-shadow: 0 0 10px var(--gold-spark); transform: translateZ(25px);"></div>
-            <p class="reveal-body" id="calligraphy-container">
-                </p>
-            <div class="reveal-footer">Forever Unlocked ✨</div>
+        <div class="player-ui">
+            <div class="track-info">
+                <div class="track-title" id="song-title">Reasons Why I Love You</div>
+                <div class="track-artist">Your Pookie</div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+                <div class="time-info">
+                    <span id="current-time">0:00</span>
+                    <span id="total-time">0:00</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="ctrl-btn side-btn" id="rewind-btn">
+                    <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+                </button>
+                
+                <button class="ctrl-btn play-btn" id="play-pause-btn">
+                    <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="pause-icon" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                
+                <button class="ctrl-btn side-btn" id="forward-btn">
+                    <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                </button>
+            </div>
+
+            <div class="lyrics-container" id="lyrics-box"></div>
         </div>
     </div>
 
     <script>
-        // --- 1. WEB AUDIO SYNTHESIZER (CINEMATIC SOUNDSCAPE) ---
-        let audioCtx;
-        let droneOsc, droneGain;
+        // --- 1. CORE SETUP & LYRICS ---
+        const audio = new Audio('song.mp3');
 
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            droneOsc = audioCtx.createOscillator();
-            droneGain = audioCtx.createGain();
-            droneOsc.type = 'sine';
-            droneOsc.frequency.value = 50; 
-            droneGain.gain.value = 0; 
-            droneOsc.connect(droneGain);
-            droneGain.connect(audioCtx.destination);
-            droneOsc.start();
-        }
-
-        function playClick() {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.03);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.03);
-        }
-
-        function playHeartbeat() {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(50, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        function playMassiveBoom() {
-            if (!audioCtx) return;
-            const bufferSize = audioCtx.sampleRate * 3;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            filter.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 2.5);
-            
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.5);
-            
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start();
-            
-            droneGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
-        }
-
-        function updateDroneIntensity(day) {
-            if (!droneGain) return;
-            const volume = (day / 15) * 0.4; 
-            const freq = 50 + (day * 3); 
-            droneGain.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.5);
-            droneOsc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.5);
-        }
-
-        // --- 2. THE LIVING PARTICLES (FIREWORKS -> HEART CONSTELLATION) ---
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-        let width, height, particles = [];
-        let isFormingHeart = false;
-
-        function initCanvas() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            particles = [];
-            for (let i = 0; i < 40; i++) {
-                particles.push({
-                    x: Math.random() * width, y: Math.random() * height,
-                    r: Math.random() * 1.5, alpha: Math.random(),
-                    v: Math.random() * 0.3 + 0.1, pulsate: Math.random() * 0.02 + 0.01,
-                    mode: 'ambient', vx: 0, vy: 0, color: '', targetX: 0, targetY: 0
-                });
-            }
-        }
-        window.addEventListener('resize', initCanvas);
-
-        // Heart Math Equation for final layout
-        function getHeartPoint(t, scale, offsetX, offsetY) {
-            const x = 16 * Math.pow(Math.sin(t), 3);
-            const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-            // Invert Y because canvas Y goes down
-            return { x: offsetX + x * scale, y: offsetY - y * scale };
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, width, height);
-            particles.forEach(p => {
-                if (p.mode === 'fireworks') {
-                    p.x += p.vx; p.y += p.vy;
-                    p.vy += 0.05; // Gravity
-                    p.vx *= 0.98; // Air resistance
-                    
-                    // Stop fading out if they are destined to form the heart
-                    if(isFormingHeart) {
-                        p.alpha += (0.6 - p.alpha) * 0.05; // Lerp alpha to 0.6
-                        // Lerp toward target position to form the heart
-                        p.x += (p.targetX - p.x) * 0.04;
-                        p.y += (p.targetY - p.y) * 0.04;
-                        p.vx *= 0.8; // Kill velocity
-                        p.vy *= 0.8;
-                    } else {
-                        p.alpha -= 0.005; // Normal fade
-                    }
-
-                    if (p.alpha > 0) {
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.r * 2, 0, Math.PI * 2);
-                        ctx.fillStyle = p.color;
-                        ctx.fill();
-                    }
-                } else if (p.mode === 'ambient') {
-                    p.y -= p.v;
-                    if (p.y < -10) { p.y = height + 10; p.x = Math.random() * width; }
-                    p.alpha += p.pulsate;
-                    if (p.alpha >= 0.8 || p.alpha <= 0.1) p.pulsate *= -1;
-
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`; 
-                    ctx.fill();
-                }
-            });
-            requestAnimationFrame(animateParticles);
-        }
-        initCanvas(); animateParticles();
-
-        // --- 3. MEMORIES ---
-        const memories = [
-            { title: "", detail: "", icon: "" }, 
-            { title: "The Spark", detail: "A single touch to ignite the journey.", icon: "✨" }, 
-            { title: "The Cryptex", detail: "Unlocking the name I love most.", icon: "🔐" }, 
-            { title: "The Constellation", detail: "Drawing a perfect heart in the stars.", icon: "🌌" }, 
-            { title: "The Envelope", detail: "Breaking the wax seal in the dark.", icon: "✉️" }, 
-            { title: "The Astrolabe", detail: "Aligning the stars to True North.", icon: "🧭" }, 
-            { title: "The Alchemy", detail: "Mixing patience, laughter, and magic.", icon: "⚗️" }, 
-            { title: "The Eclipse", detail: "Aligning the sun and the moon.", icon: "🌒" }, 
-            { title: "The Resonance", detail: "Gathering echoes to amplify the sound.", icon: "📻" }, 
-            { title: "The Kintsugi Heart", detail: "Piecing together the broken parts.", icon: "💛" }, 
-            { title: "The Compass", detail: "Finding my exact coordinates to you.", icon: "📍" }, 
-            { title: "The Typewriter", detail: "Every keystroke leading back to you.", icon: "⌨️" }, 
-            { title: "The Red Thread", detail: "Feeling the invisible pull connecting us.", icon: "🧶" }, 
-            { title: "The Golden Hour", detail: "You changed all the lighting in my life.", icon: "🌅" }, 
-            { title: "The Hourglass", detail: "Watching the final grains of sand fall.", icon: "⏳" }, 
-            { title: "The Destination", detail: "We finally made it.", icon: "🚪" } 
+        const lyricsData = [
+            { time: 0, text: "Tap play... 🎵\n(Or drag the vinyl to scrub)" },
+            { time: 3, text: "" },
+            { time: 6, text: " ✨" },
+            { time: 10, text: "" },
+            { time: 15, text: "." },
+            { time: 20, text: " ❤️" },
+            { time: 25, text: "Every day with you is beautiful." },
+            { time: 30, text: "Thangoo, Ammu." },
+            { time: 35, text: "I love you always, Honeybun. 🌙" }
         ];
 
-        // Generate Nodes
-        const nodesContainer = document.getElementById('nodes-container');
-        const nodes = [];
-        for (let i = 1; i <= 15; i++) {
-            const node = document.createElement('div');
-            node.className = 'dial-node';
-            const radians = ((i * 24) - 90) * (Math.PI / 180);
-            node.style.left = `calc(50% + ${Math.cos(radians) * 50}%)`;
-            node.style.top = `calc(50% + ${Math.sin(radians) * 50}%)`;
-            nodesContainer.appendChild(node);
-            nodes.push(node);
+        // DOM Elements
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const vinylFlipper = document.getElementById('vinyl-flipper');
+        const artContainer = document.getElementById('art-container');
+        const progressFill = document.getElementById('progress-fill');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalTimeEl = document.getElementById('total-time');
+        const lyricsBox = document.getElementById('lyrics-box');
+        const flipBtn = document.getElementById('flip-btn');
+
+        let currentLyricIndex = -1;
+
+        // Inject lyrics
+        lyricsData.forEach((lyric, index) => {
+            const p = document.createElement('p');
+            p.className = 'lyric-text';
+            p.id = `lyric-${index}`;
+            p.innerText = lyric.text;
+            lyricsBox.appendChild(p);
+        });
+        updateLyrics(0);
+
+        // --- 2. ALGORITHMIC VISUALIZER (Bypasses Browser Audio Mute) ---
+        const visCanvas = document.getElementById('visualizer-canvas');
+        const visCtx = visCanvas.getContext('2d');
+        let isVisualizerRunning = false;
+
+        function resizeVisualizer() {
+            visCanvas.width = window.innerWidth;
+            visCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeVisualizer);
+        resizeVisualizer();
+
+        function drawVisualizer() {
+            if (!isVisualizerRunning) return;
+            requestAnimationFrame(drawVisualizer);
+            
+            if (audio.paused) {
+                visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+                return;
+            }
+
+            visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+
+            const cx = visCanvas.width / 2;
+            const artRect = artContainer.getBoundingClientRect();
+            const cy = artRect.top + artRect.height / 2;
+            
+            const radius = (artRect.width / 2) * 0.95; 
+            const barCount = 64; // Number of glowing lines
+            const angleStep = (Math.PI * 2) / barCount;
+
+            visCtx.lineWidth = 4;
+            visCtx.lineCap = "round";
+
+            // Math to simulate audio beats seamlessly
+            const time = Date.now() / 1000; 
+            const beat = Math.pow(Math.sin(time * Math.PI * 1.5), 4); // Pulsing heartbeat rhythm
+
+            for (let i = 0; i < barCount; i++) {
+                // Generate natural-looking wave ripples
+                const wave1 = Math.sin(i * 0.4 + time * 3) * 0.4;
+                const wave2 = Math.cos(i * 0.2 - time * 2) * 0.3;
+                const noise = Math.random() * 0.2;
+                
+                let percent = (beat * 0.5) + Math.abs(wave1) + Math.abs(wave2) + noise;
+                if(percent > 1) percent = 1;
+
+                const barHeight = percent * 35; // Spike height
+
+                const angle = i * angleStep;
+                const x1 = cx + Math.cos(angle) * radius;
+                const y1 = cy + Math.sin(angle) * radius;
+                const x2 = cx + Math.cos(angle) * (radius + barHeight);
+                const y2 = cy + Math.sin(angle) * (radius + barHeight);
+
+                visCtx.strokeStyle = `rgba(255, 117, 140, ${percent * 0.8 + 0.2})`;
+                visCtx.beginPath();
+                visCtx.moveTo(x1, y1);
+                visCtx.lineTo(x2, y2);
+                visCtx.stroke();
+            }
         }
 
-        // --- 4. DIAL SPIN LOGIC ---
-        const wheel = document.getElementById('vault-wheel');
-        const dialCenter = document.getElementById('dial-center');
-        const dayDisplay = document.getElementById('day-display');
-        const dayLabel = document.getElementById('day-label');
-        const memoryIcon = document.getElementById('memory-icon');
-        const memoryContainer = document.getElementById('memory-container');
-        const instructionText = document.getElementById('instruction-text');
-        
-        let isSpinning = false;
-        let isLockedOn15 = false; 
-        let lastAngle = 0, totalRotation = 0, currentDay = 0, visualRotation = 0;
-        const degreesPerDay = 40; 
-        const maxRotation = 15 * degreesPerDay; 
+        // --- 3. DYNAMIC STAGE LIGHTING ---
+        function updateLighting(progressPercent) {
+            let hue = 340;
+            if (progressPercent < 50) {
+                hue = 340 + (progressPercent / 50) * 15;
+            } else {
+                hue = 355 - ((progressPercent - 50) / 50) * 115;
+            }
+            document.documentElement.style.setProperty('--bg-hue', hue);
+        }
+
+        // --- 4. TACTILE VINYL SCRUBBING (Touch Math) ---
+        let currentRotation = 0;
+        let isScrubbing = false;
+        let lastAngle = 0;
 
         function getAngle(e) {
-            const rect = wheel.getBoundingClientRect();
+            const rect = vinylFlipper.getBoundingClientRect();
             const cx = rect.left + rect.width / 2;
             const cy = rect.top + rect.height / 2;
             const x = e.touches ? e.touches[0].clientX : e.clientX;
@@ -462,284 +425,180 @@
             return Math.atan2(y - cy, x - cx) * (180 / Math.PI);
         }
 
-        wheel.addEventListener('mousedown', handleStart);
-        wheel.addEventListener('touchstart', handleStart, {passive: false});
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('touchmove', handleMove, {passive: false});
-        window.addEventListener('mouseup', handleEnd);
-        window.addEventListener('touchend', handleEnd);
+        vinylFlipper.addEventListener('mousedown', startScrub);
+        vinylFlipper.addEventListener('touchstart', startScrub, {passive: false});
+        window.addEventListener('mousemove', scrub);
+        window.addEventListener('touchmove', scrub, {passive: false});
+        window.addEventListener('mouseup', endScrub);
+        window.addEventListener('touchend', endScrub);
 
-        function handleStart(e) {
-            if (isLockedOn15) return;
-            initAudio(); 
-            isSpinning = true;
+        function startScrub(e) {
+            isScrubbing = true;
             lastAngle = getAngle(e);
-            
-            if (currentDay > 0) {
-                memoryContainer.style.opacity = '1';
-                memoryIcon.style.opacity = '0.03';
-            }
+            vinylFlipper.style.transition = 'none'; 
+            if(navigator.vibrate) navigator.vibrate(10);
         }
 
-        function handleMove(e) {
-            if (!isSpinning || isLockedOn15) return;
-            e.preventDefault(); 
+        function scrub(e) {
+            if (!isScrubbing) return;
+            e.preventDefault();
             
             const newAngle = getAngle(e);
             let delta = newAngle - lastAngle;
             if (delta > 180) delta -= 360;
             if (delta < -180) delta += 360;
 
-            totalRotation += delta;
-            if (totalRotation < 0) totalRotation = 0;
-            if (totalRotation > maxRotation) totalRotation = maxRotation;
-
-            visualRotation += delta;
-            wheel.style.transform = `rotate(${visualRotation}deg)`;
-
-            const calculatedDay = Math.floor(totalRotation / degreesPerDay);
-
-            if (calculatedDay !== currentDay && calculatedDay >= 0 && calculatedDay <= 15) {
-                currentDay = calculatedDay;
-                dayDisplay.innerText = currentDay;
-
-                playClick();
-                if(navigator.vibrate) navigator.vibrate(15);
-                updateDroneIntensity(currentDay);
-
-                nodes.forEach((node, index) => {
-                    if (index < currentDay) node.classList.add('lit');
-                    else node.classList.remove('lit');
-                });
-
-                if (currentDay > 0) {
-                    memoryContainer.style.opacity = '0'; 
-                    memoryIcon.style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('memory-title').innerText = memories[currentDay].title;
-                        document.getElementById('memory-detail').innerText = memories[currentDay].detail;
-                        memoryIcon.innerText = memories[currentDay].icon;
-                        
-                        memoryContainer.style.opacity = '1'; 
-                        memoryIcon.style.opacity = '0.05';
-                        memoryContainer.style.transform = 'scale(1.05)';
-                        setTimeout(() => memoryContainer.style.transform = 'scale(1)', 200);
-                    }, 150);
-                }
-
-                if (currentDay === 15) triggerPushMode();
-            }
+            currentRotation += delta;
+            vinylFlipper.style.transform = `rotateY(${isFlipped ? 180 : 0}deg) rotateZ(${currentRotation}deg)`;
             lastAngle = newAngle;
-        }
 
-        function handleEnd() {
-            isSpinning = false;
-            memoryContainer.style.opacity = '0'; 
-            memoryIcon.style.opacity = '0';
-        }
-
-        // --- 5. THE FINAL PUSH LOGIC ---
-        let pushTimer;
-        let heartbeatInterval;
-        let isHoldingPush = false;
-
-        function triggerPushMode() {
-            isLockedOn15 = true;
-            isSpinning = false;
-            
-            if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
-            playMassiveBoom(); 
-
-            dayLabel.style.display = 'none';
-            dayDisplay.innerHTML = '<span style="font-size:1.4rem; letter-spacing:3px;">HOLD TO<br>OPEN</span>';
-            dayDisplay.style.color = 'var(--gold-spark)';
-            dayDisplay.style.textShadow = '0 0 20px var(--gold-spark)';
-            memoryIcon.innerText = "🗝️";
-            
-            instructionText.innerHTML = `
-                The final door.
-                <div class="sub-instruction" style="color: var(--gold-spark); font-weight: 600;">Press and hold center for 3 seconds</div>
-            `;
-            
-            dialCenter.classList.add('push-mode');
-            
-            dialCenter.addEventListener('mousedown', startPush);
-            dialCenter.addEventListener('touchstart', startPush, {passive: false});
-            window.addEventListener('mouseup', endPush);
-            window.addEventListener('touchend', endPush);
-            window.addEventListener('touchcancel', endPush);
-        }
-
-        function startPush(e) {
-            e.preventDefault();
-            if (isHoldingPush) return;
-            isHoldingPush = true;
-            
-            dialCenter.classList.add('holding');
-            
-            playHeartbeat();
-            if(navigator.vibrate) navigator.vibrate([60, 100, 60]);
-            heartbeatInterval = setInterval(() => {
-                playHeartbeat();
-                if(navigator.vibrate) navigator.vibrate([60, 100, 60]);
-            }, 800);
-
-            pushTimer = setTimeout(() => {
-                if (isHoldingPush) triggerSupernova();
-            }, 3000);
-        }
-
-        function endPush() {
-            if (!isHoldingPush) return;
-            isHoldingPush = false;
-            dialCenter.classList.remove('holding');
-            clearInterval(heartbeatInterval);
-            clearTimeout(pushTimer);
-        }
-
-        // --- 6. SUPERNOVA & GOD-TIER EFFECTS ---
-        const finalLetterText = "15 days. 15 pieces of my heart.\n\nI wanted to build you something that showed you exactly how much you mean to me. You are the spark, the magic, and the masterpiece.\n\nApril 15th is the day the world got a little brighter.\n\nHappy Birthday, Ammu. I love you endlessly.";
-
-        function triggerSupernova() {
-            isHoldingPush = false;
-            dialCenter.removeEventListener('mousedown', startPush);
-            dialCenter.removeEventListener('touchstart', startPush);
-            window.removeEventListener('mouseup', endPush);
-            window.removeEventListener('touchend', endPush);
-            
-            playMassiveBoom();
-            if(navigator.vibrate) navigator.vibrate([300, 100, 400, 100, 800]);
-
-            const dial = document.getElementById('dial-wrapper');
-            instructionText.style.opacity = '0';
-            
-            dial.style.transform = 'scale(0.8)';
-            dial.style.opacity = '0';
-
-            setTimeout(() => {
-                const overlay = document.getElementById('supernova-overlay');
-                overlay.style.transition = 'opacity 0.2s ease-in';
-                overlay.style.opacity = '1';
-
-                // 1. Firework Explosion
-                const cx = window.innerWidth / 2;
-                const cy = window.innerHeight / 2;
-                const colors = ['#ff2a5f', '#b76e79', '#ffcf70', '#ffffff'];
-
-                for(let i=0; i<150; i++) {
-                    particles.push({
-                        x: cx, y: cy,
-                        r: Math.random() * 3 + 1,
-                        alpha: 1, mode: 'fireworks',
-                        color: colors[Math.floor(Math.random() * colors.length)],
-                        vx: (Math.random() - 0.5) * 40, vy: (Math.random() - 0.5) * 40,
-                        targetX: 0, targetY: 0
-                    });
-                }
-
-                // 2. Play Secret Voice Memo
-                const voiceMemo = document.getElementById('voice-memo');
-                if(voiceMemo) voiceMemo.play().catch(e => console.log("Add your voice.mp3 file!"));
-
-                // Hide dial and reveal final screen layout
-                setTimeout(() => {
-                    dial.style.display = 'none';
-                    document.getElementById('final-screen').classList.add('active');
-                    overlay.style.transition = 'opacity 3s ease-out';
-                    overlay.style.opacity = '0';
-                    
-                    // Trigger Constellation Heart Formation
-                    setTimeout(() => formConstellationHeart(cx, cy), 1500);
-
-                    // Trigger Calligraphy Writing
-                    setTimeout(startCalligraphy, 800);
-
-                    // Enable Gyroscope Parallax
-                    enableParallax();
-                }, 500);
-
-            }, 800);
-        }
-
-        // Feature 1: Particle Constellation Heart
-        function formConstellationHeart(cx, cy) {
-            isFormingHeart = true;
-            let fireworkParticles = particles.filter(p => p.mode === 'fireworks');
-            let scale = Math.min(window.innerWidth, window.innerHeight) * 0.015; // Dynamic size
-
-            fireworkParticles.forEach((p, i) => {
-                // Distribute particles evenly along the heart math path
-                let t = (i / fireworkParticles.length) * Math.PI * 2;
-                let target = getHeartPoint(t, scale, cx, cy - 50);
-                p.targetX = target.x;
-                p.targetY = target.y;
-            });
-        }
-
-        // Feature 2: Calligraphy Unfold (Typing text)
-        function startCalligraphy() {
-            const container = document.getElementById('calligraphy-container');
-            container.innerHTML = ""; // Clear
-            
-            // Split by words, preserving newlines
-            const words = finalLetterText.split(/(\n|\s+)/); 
-            
-            words.forEach((word, index) => {
-                if (word === '\n') {
-                    container.appendChild(document.createElement('br'));
-                } else if (word.trim() !== '') {
-                    const span = document.createElement('span');
-                    span.className = 'calligraphy-word';
-                    span.innerText = word + " ";
-                    container.appendChild(span);
-                    
-                    // Reveal sequentially
-                    setTimeout(() => {
-                        span.style.opacity = '1';
-                        span.style.filter = 'blur(0px)';
-                    }, index * 80); // Speed of the invisible writer
-                }
-            });
-        }
-
-        // Feature 3: The Living Letter (Gyroscope Parallax)
-        function enableParallax() {
-            const card = document.getElementById('reveal-card');
-            const particleLayer = document.getElementById('particle-canvas');
-            
-            // Request permission on iOS 13+ if needed
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().catch(console.error);
-            }
-
-            window.addEventListener('deviceorientation', (e) => {
-                // gamma is left-to-right tilt in degrees, where right is positive
-                // beta is front-to-back tilt in degrees, where front is positive
-                let x = e.gamma; 
-                let y = e.beta;
-
-                // Clamp values to prevent the card from flipping over
-                if (x > 30) x = 30; if (x < -30) x = -30;
-                if (y > 60) y = 60; if (y < 0) y = 0; // Assuming she holds it somewhat flat/tilted up
-
-                // Normalize y for a nicer resting state
-                y = y - 30; 
-
-                // Apply tilt to the card
-                card.style.transform = `scale(1) rotateY(${x * 0.5}deg) rotateX(${-y * 0.5}deg)`;
+            if (audio.duration) {
+                let newTime = audio.currentTime + (delta * 0.1);
+                if (newTime < 0) newTime = 0;
+                if (newTime > audio.duration) newTime = audio.duration;
+                audio.currentTime = newTime;
                 
-                // Shift the background particles in the opposite direction for deep 3D space
-                particleLayer.style.transform = `translate(${x * -1}px, ${y * -1}px)`;
-            });
-
-            // Fallback for Desktop testing (Mouse movement parallax)
-            window.addEventListener('mousemove', (e) => {
-                let x = (window.innerWidth / 2 - e.pageX) / 20;
-                let y = (window.innerHeight / 2 - e.pageY) / 20;
-                card.style.transform = `scale(1) rotateY(${-x}deg) rotateX(${y}deg)`;
-                particleLayer.style.transform = `translate(${x*2}px, ${-y*2}px)`;
-            });
+                if (Math.abs(delta) > 2 && navigator.vibrate) navigator.vibrate(5);
+            }
         }
+
+        function endScrub() {
+            if(!isScrubbing) return;
+            isScrubbing = false;
+            vinylFlipper.style.transition = 'transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1)';
+        }
+
+        setInterval(() => {
+            if (!audio.paused && !isScrubbing) {
+                currentRotation += 0.5; 
+                vinylFlipper.style.transform = `rotateY(${isFlipped ? 180 : 0}deg) rotateZ(${currentRotation}deg)`;
+            }
+        }, 16);
+
+        // --- 5. B-SIDE 3D FLIP ---
+        let isFlipped = false;
+        flipBtn.addEventListener('click', () => {
+            isFlipped = !isFlipped;
+            if(navigator.vibrate) navigator.vibrate([20, 50, 20]);
+            vinylFlipper.style.transform = `rotateY(${isFlipped ? 180 : 0}deg) rotateZ(${currentRotation}deg)`;
+            flipBtn.innerText = isFlipped ? "Flip A-Side" : "Flip B-Side";
+        });
+
+        // --- 6. AUDIO LOGIC & CONTROLS ---
+        audio.addEventListener('loadedmetadata', () => { totalTimeEl.innerText = formatTime(audio.duration); });
+
+        playPauseBtn.addEventListener('click', () => {
+            if(navigator.vibrate) navigator.vibrate(15);
+
+            if (audio.paused) {
+                audio.play().then(() => {
+                    playIcon.style.display = 'none'; 
+                    pauseIcon.style.display = 'block';
+                    artContainer.classList.add('playing');
+                    
+                    // Start the algorithmic visualizer
+                    if (!isVisualizerRunning) {
+                        isVisualizerRunning = true;
+                        drawVisualizer();
+                    }
+                }).catch(err => {
+                    console.error("Playback prevented. Please tap to play.", err);
+                });
+            } else {
+                audio.pause();
+                playIcon.style.display = 'block'; 
+                pauseIcon.style.display = 'none';
+                artContainer.classList.remove('playing');
+            }
+        });
+
+        document.getElementById('forward-btn').addEventListener('click', () => { audio.currentTime += 5; if(navigator.vibrate) navigator.vibrate(10); });
+        document.getElementById('rewind-btn').addEventListener('click', () => { audio.currentTime -= 5; if(navigator.vibrate) navigator.vibrate(10); });
+
+        audio.addEventListener('timeupdate', () => {
+            let progressPercent = 0;
+            if (audio.duration) {
+                progressPercent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = `${progressPercent}%`;
+                updateLighting(progressPercent);
+            }
+            currentTimeEl.innerText = formatTime(audio.currentTime);
+            updateLyrics(audio.currentTime);
+        });
+
+        audio.addEventListener('ended', () => {
+            playIcon.style.display = 'block'; pauseIcon.style.display = 'none';
+            artContainer.classList.remove('playing');
+            progressFill.style.width = `0%`; currentTimeEl.innerText = "0:00";
+            updateLyrics(0); updateLighting(0);
+        });
+
+        function updateLyrics(time) {
+            let newLyricIndex = -1;
+            for (let i = lyricsData.length - 1; i >= 0; i--) {
+                if (time >= lyricsData[i].time) {
+                    newLyricIndex = i;
+                    break;
+                }
+            }
+            if (newLyricIndex !== currentLyricIndex && newLyricIndex !== -1) {
+                if (currentLyricIndex !== -1) document.getElementById(`lyric-${currentLyricIndex}`).classList.remove('active');
+                document.getElementById(`lyric-${newLyricIndex}`).classList.add('active');
+                currentLyricIndex = newLyricIndex;
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // --- 7. AMBIENT PARTICLES (Stardust & Hearts) ---
+        const pCanvas = document.getElementById('particle-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let pWidth, pHeight, bParticles = [];
+
+        function initPCanvas() {
+            pWidth = pCanvas.width = window.innerWidth;
+            pHeight = pCanvas.height = window.innerHeight;
+            bParticles = [];
+            for (let i = 0; i < 30; i++) {
+                bParticles.push({
+                    x: Math.random() * pWidth, y: Math.random() * pHeight,
+                    r: Math.random() * 1.5 + 0.5, speed: Math.random() * 0.3 + 0.1,
+                    alpha: Math.random() * 0.5 + 0.1, isHeart: Math.random() > 0.8
+                });
+            }
+        }
+        window.addEventListener('resize', initPCanvas);
+        
+        function drawPHeart(ctx, x, y, size, alpha) {
+            ctx.save(); ctx.translate(x, y); ctx.scale(size, size);
+            ctx.globalAlpha = alpha; ctx.fillStyle = '#ff758c';
+            ctx.beginPath(); ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(0, -1.5, 2.5, -1.5, 2.5, 0); ctx.bezierCurveTo(2.5, 1.5, 0, 3, 0, 3);
+            ctx.bezierCurveTo(0, 3, -2.5, 1.5, -2.5, 0); ctx.bezierCurveTo(-2.5, -1.5, 0, -1.5, 0, 0);
+            ctx.fill(); ctx.restore();
+        }
+
+        function animatePParticles() {
+            pCtx.clearRect(0, 0, pWidth, pHeight);
+            const speedMultiplier = !audio.paused ? 2 : 0.5;
+
+            bParticles.forEach(p => {
+                p.y -= p.speed * speedMultiplier;
+                p.x += Math.sin(p.y * 0.05) * 0.2; 
+                
+                if (p.y < -10) { p.y = pHeight + 10; p.x = Math.random() * pWidth; }
+                
+                if (p.isHeart) { drawPHeart(pCtx, p.x, p.y, p.r, p.alpha); } 
+                else { pCtx.beginPath(); pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2); pCtx.fillStyle = `rgba(224, 191, 184, ${p.alpha})`; pCtx.fill(); }
+            });
+            requestAnimationFrame(animatePParticles);
+        }
+        initPCanvas(); animatePParticles();
     </script>
 </body>
 </html>
