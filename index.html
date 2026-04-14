@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Forever 🎵</title>
     
     <style>
@@ -26,15 +27,16 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
+        body, html {
             background-color: var(--bg-deep);
             background-image: radial-gradient(circle at 50% 20%, var(--bg-light) 0%, var(--bg-deep) 80%);
-            height: 100vh; height: 100dvh; /* 100dvh is crucial for Android Chrome URL bars */
             width: 100vw;
+            min-height: 100vh;
+            min-height: 100dvh; /* Forces fill on tall Android screens */
             display: flex; justify-content: center; align-items: center;
             overflow: hidden; color: var(--text-main);
             transition: background-color 0.5s ease, background-image 0.5s ease;
-            touch-action: none; /* Prevents Android pull-to-refresh */
+            touch-action: none;
         }
 
         #particle-canvas, #visualizer-canvas {
@@ -45,28 +47,26 @@
         #visualizer-canvas { z-index: 3; opacity: 0.6; filter: drop-shadow(0 0 10px var(--accent)); }
 
         #phone-container {
-            width: 100%; max-width: 430px; height: 100%; max-height: 932px;
-            position: relative; display: flex; flex-direction: column; justify-content: center;
-            /* Fluid padding to adapt to shorter Android screens */
-            padding: clamp(15px, 3vh, 40px) 20px; 
+            width: 100%; max-width: 480px; 
+            height: 100%; min-height: 100dvh; 
+            position: relative; display: flex; flex-direction: column; 
+            justify-content: space-between; /* Spreads elements naturally on tall screens */
+            padding: clamp(30px, 6vh, 60px) 25px; 
             z-index: 10;
         }
 
         .header {
             text-align: center; font-size: 0.85rem; font-weight: 500;
             color: var(--text-muted); letter-spacing: 4px; text-transform: uppercase;
-            /* Fluid margin */
-            margin-bottom: clamp(20px, 5vh, 50px); 
-            animation: fadeIn 2s ease;
+            animation: fadeIn 2s ease; margin-bottom: 2vh;
         }
 
         /* --- 3D RECORD PLAYER --- */
         .album-art-container {
             width: 100%; 
-            /* CRITICAL: Max width based on viewport height prevents UI cutoff on short Androids */
-            max-width: clamp(200px, 40vh, 340px); 
+            max-width: clamp(250px, 40vh, 360px); 
             aspect-ratio: 1/1;
-            margin: 0 auto clamp(20px, 5vh, 40px) auto;
+            margin: 0 auto;
             position: relative;
             perspective: 1000px;
         }
@@ -76,8 +76,7 @@
             position: relative; top: 7.5%;
             transform-style: preserve-3d;
             transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            z-index: 5; cursor: grab;
-            touch-action: none;
+            z-index: 5; cursor: grab; touch-action: none;
         }
         .vinyl-flipper:active { cursor: grabbing; }
 
@@ -129,7 +128,7 @@
         }
 
         .flip-btn {
-            position: absolute; top: 0; right: 0;
+            position: absolute; top: -10px; right: -10px;
             background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
             color: var(--text-main); font-size: 0.7rem; letter-spacing: 2px;
             padding: 8px 15px; border-radius: 20px; text-transform: uppercase;
@@ -167,10 +166,10 @@
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 30px; 
-            padding: clamp(15px, 3vh, 25px) 20px;
+            padding: clamp(20px, 4vh, 30px) 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; flex: 1; min-height: 0;
-            z-index: 15;
+            z-index: 15; margin-top: 3vh;
         }
 
         .track-info { text-align: center; margin-bottom: clamp(15px, 3vh, 25px); pointer-events: none; }
@@ -229,6 +228,8 @@
     </style>
 </head>
 <body>
+
+    <audio id="bg-audio" src="song.MP3" preload="auto"></audio>
 
     <canvas id="particle-canvas"></canvas>
     
@@ -295,7 +296,8 @@
 
     <script>
         // --- 1. CORE SETUP & LYRICS ---
-        const audio = new Audio('song.mp3');
+        // Reference the hardcoded HTML element to bypass Android blocking
+        const audio = document.getElementById('bg-audio');
 
         const lyricsData = [
             { time: 0, text: "Tap play... 🎵\n(Or drag the vinyl to scrub)" },
@@ -337,8 +339,6 @@
         const visCanvas = document.getElementById('visualizer-canvas');
         const visCtx = visCanvas.getContext('2d');
         let isVisualizerRunning = false;
-        
-        // Cache canvas dimensions for Mobile Performance
         let visCx, visCy, visRadius;
 
         function resizeVisualizer() {
@@ -350,7 +350,6 @@
             visRadius = (artRect.width / 2) * 0.95; 
         }
         window.addEventListener('resize', resizeVisualizer);
-        // Initial setup
         setTimeout(resizeVisualizer, 100);
 
         function drawVisualizer() {
@@ -364,7 +363,7 @@
 
             visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
             
-            const barCount = 48; // Slightly lowered for better Android performance
+            const barCount = 48; 
             const angleStep = (Math.PI * 2) / barCount;
 
             visCtx.lineWidth = 4;
@@ -381,7 +380,6 @@
                 let percent = (beat * 0.5) + Math.abs(wave1) + Math.abs(wave2) + noise;
                 if(percent > 1) percent = 1;
 
-                // Scale spike height dynamically
                 const barHeight = percent * (visRadius * 0.25); 
 
                 const angle = i * angleStep;
@@ -409,7 +407,7 @@
             document.documentElement.style.setProperty('--bg-hue', hue);
         }
 
-        // --- 4. TACTILE VINYL SCRUBBING (Android Safe) ---
+        // --- 4. TACTILE VINYL SCRUBBING ---
         let currentRotation = 0;
         let isScrubbing = false;
         let lastAngle = 0;
@@ -429,7 +427,7 @@
         window.addEventListener('touchmove', scrub, {passive: false});
         window.addEventListener('mouseup', endScrub);
         window.addEventListener('touchend', endScrub);
-        window.addEventListener('touchcancel', endScrub); // Critical for Android swipe glitches
+        window.addEventListener('touchcancel', endScrub); 
 
         function startScrub(e) {
             isScrubbing = true;
@@ -440,7 +438,7 @@
 
         function scrub(e) {
             if (!isScrubbing) return;
-            e.preventDefault(); // Stop Android page pull-to-refresh
+            e.preventDefault(); 
             
             const newAngle = getAngle(e);
             let delta = newAngle - lastAngle;
@@ -490,6 +488,9 @@
             if(navigator.vibrate) navigator.vibrate(15);
 
             if (audio.paused) {
+                // Ensure audio is loaded properly on Android before playing
+                if (audio.readyState === 0) audio.load();
+                
                 audio.play().then(() => {
                     playIcon.style.display = 'none'; 
                     pauseIcon.style.display = 'block';
@@ -497,11 +498,14 @@
                     
                     if (!isVisualizerRunning) {
                         isVisualizerRunning = true;
-                        resizeVisualizer(); // Recalculate layout before starting
+                        resizeVisualizer(); 
                         drawVisualizer();
                     }
                 }).catch(err => {
-                    console.error("Playback prevented. Please tap to play.", err);
+                    console.error("Playback prevented.", err);
+                    // Fallback trigger if Android blocked the Promise
+                    audio.load();
+                    audio.play();
                 });
             } else {
                 audio.pause();
