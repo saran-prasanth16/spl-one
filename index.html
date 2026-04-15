@@ -39,12 +39,11 @@
             touch-action: none;
         }
 
-        #particle-canvas, #visualizer-canvas {
+        #particle-canvas {
             position: absolute; top: 0; left: 0;
             width: 100vw; height: 100dvh;
             z-index: 1; pointer-events: none;
         }
-        #visualizer-canvas { z-index: 3; opacity: 0.6; filter: drop-shadow(0 0 10px var(--accent)); }
 
         #phone-container {
             width: 100%; max-width: 480px; 
@@ -69,6 +68,17 @@
             margin: 0 auto;
             position: relative;
             perspective: 1000px;
+        }
+
+        /* PERFECTLY CENTERED VISUALIZER CANVAS */
+        #visualizer-canvas {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140%; height: 140%; /* Big enough to fit the glowing spikes */
+            z-index: 1; opacity: 0.7; 
+            filter: drop-shadow(0 0 12px var(--accent)); 
+            pointer-events: none;
         }
 
         .vinyl-flipper {
@@ -332,19 +342,25 @@
         });
         updateLyrics(0);
 
-        // --- 2. SAFE ALGORITHMIC VISUALIZER ---
+        // --- 2. PERFECTLY ALIGNED VISUALIZER ---
         const visCanvas = document.getElementById('visualizer-canvas');
         const visCtx = visCanvas.getContext('2d');
         let isVisualizerRunning = false;
         let visCx, visCy, visRadius;
 
         function resizeVisualizer() {
-            visCanvas.width = window.innerWidth;
-            visCanvas.height = window.innerHeight;
-            const artRect = artContainer.getBoundingClientRect();
+            // Anchor size perfectly to the wrapper itself
+            const rect = visCanvas.getBoundingClientRect();
+            visCanvas.width = rect.width;
+            visCanvas.height = rect.height;
+            
+            // Center is always the exact middle of this specific canvas
             visCx = visCanvas.width / 2;
-            visCy = artRect.top + artRect.height / 2;
-            visRadius = (artRect.width / 2) * 0.95; 
+            visCy = visCanvas.height / 2;
+            
+            // The canvas is 140% of artContainer, vinyl is 85% of artContainer.
+            const artRect = artContainer.getBoundingClientRect();
+            visRadius = (artRect.width * 0.85) / 2; 
         }
         window.addEventListener('resize', resizeVisualizer);
         setTimeout(resizeVisualizer, 100);
@@ -485,7 +501,6 @@
             if(navigator.vibrate) navigator.vibrate(15);
 
             if (audio.paused) {
-                // Safely handle Audio Promise on strict browsers
                 const playPromise = audio.play();
                 
                 if (playPromise !== undefined) {
@@ -501,7 +516,6 @@
                         }
                     }).catch(err => {
                         console.warn("Playback prevented, falling back:", err);
-                        // Hard fallback if promise fails
                         audio.load();
                         audio.play();
                     });
