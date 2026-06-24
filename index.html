@@ -2,287 +2,382 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#03040b">
-    <title>For You</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy 25th Anniversary!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@200;300;400&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        * {
-            margin: 0; padding: 0; box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none; user-select: none;
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            /* Dark, beautiful, elegant midnight gradient */
+            background: linear-gradient(-45deg, #0b0914, #161224, #1b102b, #0f0a1c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            cursor: none; 
+            color: #e0e0e0; /* Light text for dark mode */
         }
 
-        body, html {
-            width: 100vw; min-height: 100vh; min-height: 100dvh;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background: linear-gradient(to bottom, #010205 0%, #060814 60%, #0a0d1f 100%);
-            color: #e0e0e0; font-family: 'Montserrat', sans-serif;
-            overflow: hidden; touch-action: none; 
-            padding-bottom: env(safe-area-inset-bottom);
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* --- THE STARRY SKY (Canvas) --- */
-        #star-canvas {
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
-            z-index: 0; pointer-events: none;
+        /* --- Custom Cursor --- */
+        .custom-cursor {
+            position: fixed;
+            top: 0; left: 0;
+            width: 20px; height: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(192, 192, 192, 0.6);
+            transition: width 0.2s, height 0.2s;
         }
 
-        /* --- THE CONSTELLATION OVERLAY --- */
-        #constellation-container {
-            position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%);
-            width: 80vw; max-width: 400px; height: 300px;
-            z-index: 5; pointer-events: none; opacity: 0;
-            transition: opacity 3s ease 1s; 
+        /* --- Floating Hearts/Sparkles --- */
+        .heart {
+            position: fixed;
+            bottom: -20px;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.5);
+            animation: floatUp linear forwards;
+            z-index: 0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            pointer-events: none;
         }
-        body.released #constellation-container { opacity: 0.6; }
 
-        /* The Animation Fix is Here */
-        .constellation-line {
-            fill: none; stroke: rgba(255, 200, 100, 0.4); stroke-width: 1.5;
-            stroke-dasharray: 100; stroke-dashoffset: 100;
-            transition: stroke-dashoffset 4s cubic-bezier(0.25, 0.8, 0.25, 1) 1s;
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(-110vh) scale(1.5) rotate(360deg); opacity: 0; }
         }
-        body.released .constellation-line { stroke-dashoffset: 0; }
 
-        .constellation-star {
-            fill: #ffdf73; filter: drop-shadow(0 0 5px #ffdf73);
-            opacity: 0; transition: opacity 1s ease;
+        /* --- Cinematic Scroll Reveal --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s ease-out;
         }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Sections Layout --- */
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- 3D Tilt Card (Dark Glassmorphism) --- */
+        .tilt-container { transform-style: preserve-3d; transition: transform 0.1s ease; }
         
-        /* Stars fade in progressively as the line connects them */
-        body.released .star-1 { opacity: 1; transition-delay: 1.0s; }
-        body.released .star-2 { opacity: 1; transition-delay: 1.6s; }
-        body.released .star-3 { opacity: 1; transition-delay: 2.2s; }
-        body.released .star-6 { opacity: 1; transition-delay: 2.8s; } /* Center Dip */
-        body.released .star-4 { opacity: 1; transition-delay: 3.4s; }
-        body.released .star-5 { opacity: 1; transition-delay: 4.0s; }
-
-        /* --- THE MESSAGE --- */
-        #message-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -40%);
-            width: 85%; max-width: 400px; text-align: center; z-index: 10;
-            opacity: 0; pointer-events: none; 
-            transition: opacity 3s ease 2s, transform 3s ease 2s;
-        }
-        body.released #message-container {
-            opacity: 1; transform: translate(-50%, -50%); pointer-events: auto;
+        .card {
+            background: rgba(20, 20, 20, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 50px 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            transform: translateZ(50px);
+            max-width: 500px;
+            width: 100%;
         }
 
-        .message-title {
-            font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 8vw, 2.5rem);
-            color: #ffdf73; font-style: italic; margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 223, 115, 0.4);
+        .image-placeholder {
+            width: 260px; height: 260px;
+            margin: 0 auto 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid #c0c0c0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(192, 192, 192, 0.4);
+            transform: translateZ(90px);
+            transition: transform 0.3s ease;
         }
-        .message-body {
-            font-size: clamp(0.9rem, 4.5vw, 1.05rem); line-height: 1.8; color: #d0d0d0;
-            font-weight: 300; letter-spacing: 0.5px;
+        .image-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Neon Glowing Text (Silver/White for Dark Mode) */
+        .glow-text {
+            font-family: 'Dancing Script', cursive;
+            color: #ffffff;
+            margin-bottom: 15px;
+            animation: neonPulse 2.5s infinite alternate;
+        }
+        h1.glow-text { font-size: 3.8rem; transform: translateZ(70px); }
+        h2.glow-text { font-size: 2.8rem; }
+
+        @keyframes neonPulse {
+            0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #c0c0c0, 0 0 30px #a9a9a9; }
+            100% { text-shadow: 0 0 2px #fff, 0 0 5px #fff, 0 0 10px #e0e0e0, 0 0 15px #d3d3d3; }
         }
 
-        /* --- THE SKY LANTERN --- */
-        #lantern-container {
-            position: absolute; 
-            bottom: max(10vh, calc(40px + env(safe-area-inset-bottom))); 
-            left: 50%; transform: translateX(-50%);
-            width: 80px; height: 110px; z-index: 20;
-            display: flex; flex-direction: column; align-items: center;
-            cursor: pointer; touch-action: none;
-            animation: floatLantern 4s ease-in-out infinite;
-        }
+        .card p { font-size: 1.1rem; color: #cccccc; transform: translateZ(50px); line-height: 1.6; }
 
-        .lantern-glow {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 150px; height: 150px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 140, 50, 0.6) 0%, rgba(255, 80, 20, 0.2) 40%, transparent 70%);
-            pointer-events: none; z-index: -1;
-            animation: pulseGlow 3s infinite alternate;
+        /* --- Live Counter --- */
+        .counter-panel {
+            background: rgba(15, 15, 20, 0.5);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
+        .counter-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
+        .time-box {
+            background: rgba(30, 30, 35, 0.6);
+            padding: 20px; border-radius: 15px; min-width: 110px;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.05), 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .time-value { font-size: 2.5rem; font-weight: 800; color: #ffffff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .time-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: #a0a0a0; font-weight: 600; }
 
-        .lantern-body {
-            width: 60px; height: 80px;
-            background: linear-gradient(180deg, #ffb347 0%, #ff7b00 100%);
-            border-radius: 40% 40% 30% 30% / 20% 20% 10% 10%;
-            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.3), inset 5px 0 15px rgba(255,255,255,0.4), 0 10px 20px rgba(255, 100, 0, 0.4);
-            position: relative; overflow: hidden;
+        /* --- The Wax Seal Letter --- */
+        .envelope-container {
+            width: 100%; max-width: 600px;
+            position: relative; perspective: 1000px; cursor: pointer;
         }
-        
-        .lantern-body::before, .lantern-body::after {
-            content: ''; position: absolute; top: 0; width: 1px; height: 100%;
-            background: rgba(150, 50, 0, 0.4);
+        .envelope {
+            background: rgba(25, 25, 30, 0.9); 
+            padding: 40px; border-radius: 10px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            text-align: center; position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.5s ease;
         }
-        .lantern-body::before { left: 30%; }
-        .lantern-body::after { right: 30%; }
-        
-        .lantern-base {
-            width: 40px; height: 6px; background: #3a2010;
-            border-radius: 2px; margin-top: -2px; z-index: 2;
+        .envelope:hover { transform: translateY(-10px); }
+        .wax-seal {
+            width: 80px; height: 80px; background: #c0c0c0; /* Silver seal */
+            border-radius: 50%; margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            color: #111; font-family: 'Dancing Script'; font-size: 2.5rem; font-weight: bold;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 15px rgba(0, 0, 0, 0.8);
         }
+        .envelope h2 { color: #e0e0e0; font-weight: 400; font-size: 1.2rem; }
+        .letter-content {
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height 1s ease, opacity 1s ease;
+            font-size: 1.1rem; color: #cccccc; line-height: 1.8;
+            border-top: 1px dashed #444; margin-top: 20px;
+        }
+        .envelope.open .letter-content { max-height: 1000px; opacity: 1; padding-top: 20px; }
+        .envelope.open .wax-seal { background: #333; box-shadow: inset 0 0 15px #111; color: #555; }
+        .envelope.open h2 { display: none; }
 
-        #swipe-hint {
-            position: absolute; bottom: -40px; width: 200px; text-align: center;
-            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; letter-spacing: 3px;
-            text-transform: uppercase; color: rgba(255, 200, 100, 0.6); font-weight: 400;
-            animation: slideUpHint 2s infinite ease-in-out; pointer-events: none;
-            transition: opacity 0.5s ease;
+        /* --- Vinyl Record Player --- */
+        .vinyl-player {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 80px; height: 80px; z-index: 100; cursor: pointer;
         }
+        .record {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: repeating-radial-gradient(#111, #111 4px, #000 5px, #000 8px);
+            border: 2px solid #555; box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s;
+        }
+        .record-label { width: 30px; height: 30px; background: #c0c0c0; border-radius: 50%; } /* Silver label */
+        .vinyl-player.playing .record { animation: spin 3s linear infinite; }
+        .vinyl-player:hover { transform: scale(1.1); }
+        .music-note {
+            position: absolute; top: -10px; right: -10px; font-size: 1.5rem;
+            opacity: 0; transition: opacity 0.3s; color: white;
+        }
+        .vinyl-player.playing .music-note { opacity: 1; animation: floatUpNote 2s infinite; }
 
-        /* --- ANIMATIONS --- */
-        @keyframes floatLantern { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-15px); } }
-        @keyframes pulseGlow { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } }
-        @keyframes slideUpHint { 0%, 100% { transform: translateY(0); opacity: 0.3; } 50% { transform: translateY(-8px); opacity: 0.8; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes floatUpNote { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-30px); opacity: 0; } }
+
+        @media (max-width: 600px) {
+            h1.glow-text { font-size: 2.8rem; }
+            .time-box { min-width: 80px; padding: 15px 10px; }
+            .time-value { font-size: 1.8rem; }
+            .time-label { font-size: 0.7rem; }
+            .vinyl-player { bottom: 15px; right: 15px; width: 60px; height: 60px; }
+        }
     </style>
 </head>
 <body>
 
-    <canvas id="star-canvas"></canvas>
+    <audio id="bg-music" loop>
+        <source src="./our-song.mp3" type="audio/mpeg">
+    </audio>
 
-    <svg id="constellation-container" viewBox="0 0 200 150">
-        <path class="constellation-line" pathLength="100" d="M 100 120 L 50 60 L 70 30 L 100 50 L 130 30 L 150 60 L 100 120" />
-        
-        <circle class="constellation-star star-1" cx="100" cy="120" r="3.5" />
-        <circle class="constellation-star star-2" cx="50" cy="60" r="2.5" />
-        <circle class="constellation-star star-3" cx="70" cy="30" r="2.5" />
-        <circle class="constellation-star star-6" cx="100" cy="50" r="2" /> <circle class="constellation-star star-4" cx="130" cy="30" r="2.5" />
-        <circle class="constellation-star star-5" cx="150" cy="60" r="2.5" />
-    </svg>
+    <div class="custom-cursor" id="cursor"></div>
 
-    <div id="message-container">
-        <h1 class="message-title">I'm sorry.</h1>
-        <div style="width: 30px; height: 1px; background: rgba(255, 200, 100, 0.5); margin: 0 auto 20px auto;"></div>
-        <p class="message-body">
-            I know you need space right now, and I am going to respect that boundary.<br><br>
-            I just wanted to say that I messed up, and I am deeply sorry.<br><br>
-            I'm still down here, sending you all my light until you're ready. No reply expected.
-        </p>
+    <div class="vinyl-player" id="vinyl">
+        <div class="music-note">🎵</div>
+        <div class="record">
+            <div class="record-label"></div>
+        </div>
     </div>
 
-    <div id="lantern-container">
-        <div class="lantern-glow"></div>
-        <div class="lantern-body"></div>
-        <div class="lantern-base"></div>
-        <div id="swipe-hint">Swipe up to release ⟶</div>
-    </div>
+    <section>
+        <div class="tilt-container" id="tilt-box">
+            <div class="card">
+                <div class="image-placeholder">
+                    <img src="./couple-photo.jpg" alt="The Beautiful Couple">
+                </div>
+                <h1 class="glow-text">Happy 25th Anniversary!</h1>
+                <p>To the most wonderful couple. May your silver anniversary shine as bright and beautifully as the life and love you've built together.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="reveal">
+        <div class="counter-panel">
+            <h2 class="glow-text">A Lifetime of Love</h2>
+            <div class="counter-grid">
+                <div class="time-box"><div class="time-value" id="c-years">00</div><div class="time-label">Years</div></div>
+                <div class="time-box"><div class="time-value" id="c-days">00</div><div class="time-label">Days</div></div>
+                <div class="time-box"><div class="time-value" id="c-hours">00</div><div class="time-label">Hours</div></div>
+                <div class="time-box"><div class="time-value" id="c-minutes">00</div><div class="time-label">Minutes</div></div>
+                <div class="time-box"><div class="time-value" id="c-seconds">00</div><div class="time-label">Seconds</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="reveal">
+        <div class="envelope-container" onclick="toggleLetter()">
+            <div class="envelope" id="envelope">
+                <div class="wax-seal">25</div>
+                <h2>Tap to break the seal</h2>
+                <div class="letter-content">
+                    <p>Dear Mom & Dad (or Names),</p><br>
+                    <p>Over the last 25 years, you have shown everyone around you what true partnership looks like. Through all of life's ups and downs, your love has been a constant anchor.</p><br>
+                    <p>Thank you for building a home filled with warmth, endless support, and laughter. We couldn't have asked for better role models. Here is to a quarter-century of beautiful memories, and to all the adventures still to come!</p><br>
+                    <p>With all our love,<br><strong>Your Family</strong></p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <script>
-        // ==========================================
-        // 1. STARRY NIGHT CANVAS 
-        // ==========================================
-        const canvas = document.getElementById('star-canvas');
-        const ctx = canvas.getContext('2d');
-        let cw = canvas.width = window.innerWidth;
-        let ch = canvas.height = window.innerHeight;
-        let stars = [];
+        // --- Confetti Cannon (Silver & White theme for Dark Mode) ---
+        window.addEventListener('load', () => {
+            let duration = 3000;
+            let end = Date.now() + duration;
 
-        window.addEventListener('resize', () => {
-            cw = canvas.width = window.innerWidth;
-            ch = canvas.height = window.innerHeight;
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ffffff', '#c0c0c0', '#808080']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ffffff', '#c0c0c0', '#808080']
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
         });
 
-        for (let i = 0; i < 150; i++) {
-            stars.push({
-                x: Math.random() * cw,
-                y: Math.random() * ch,
-                r: Math.random() * 1.5,
-                alpha: Math.random(),
-                twinkleSpeed: Math.random() * 0.02 + 0.005
-            });
-        }
+        // --- Custom Cursor Tracking ---
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.style.transform = 'translate(-50%, -50%) scale(0.5)');
+        document.addEventListener('mouseup', () => cursor.style.transform = 'translate(-50%, -50%) scale(1)');
 
-        function drawStars() {
-            ctx.clearRect(0, 0, cw, ch);
-            for (let i = 0; i < stars.length; i++) {
-                let s = stars[i];
-                s.alpha += s.twinkleSpeed;
-                if (s.alpha > 1 || s.alpha < 0.1) s.twinkleSpeed = -s.twinkleSpeed;
+        // --- Vinyl Audio Player ---
+        const vinyl = document.getElementById('vinyl');
+        const audio = document.getElementById('bg-music');
+        let isPlaying = false;
 
-                ctx.globalAlpha = s.alpha;
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            requestAnimationFrame(drawStars);
-        }
-        drawStars();
-
-        // ==========================================
-        // 2. ANDROID-PROOF SWIPE PHYSICS
-        // ==========================================
-        const lantern = document.getElementById('lantern-container');
-        const hint = document.getElementById('swipe-hint');
-        let startY = 0;
-        let currentY = 0;
-        let isDragging = false;
-        let isReleased = false;
-
-        function startSwipe(e) {
-            if (isReleased) return;
-            if (e.cancelable) e.preventDefault();
-            
-            isDragging = true;
-            startY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            lantern.style.animation = 'none';
-            lantern.style.transition = 'none';
-            hint.style.opacity = '0';
-        }
-
-        function dragSwipe(e) {
-            if (!isDragging || isReleased) return;
-            if (e.cancelable) e.preventDefault(); 
-            
-            currentY = e.touches ? e.touches[0].clientY : e.clientY;
-            let diffY = currentY - startY;
-
-            if (diffY > 20) diffY = 20; 
-            
-            lantern.style.transform = `translateX(-50%) translateY(${diffY}px)`;
-        }
-
-        function endSwipe() {
-            if (!isDragging || isReleased) return;
-            isDragging = false;
-            let diffY = currentY - startY;
-
-            if (diffY < -60) {
-                triggerRelease();
+        vinyl.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                vinyl.classList.remove('playing');
             } else {
-                lantern.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
-                lantern.style.transform = `translateX(-50%) translateY(0)`;
-                hint.style.opacity = '1';
-                
-                setTimeout(() => {
-                    if(!isReleased) lantern.style.animation = 'floatLantern 4s ease-in-out infinite';
-                }, 500);
+                // Ensure music plays from beginning if it was paused
+                if(audio.currentTime === 0) audio.load(); 
+                audio.play().catch(e => console.log("Audio play failed (browser restriction):", e));
+                vinyl.classList.add('playing');
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // --- Cinematic Scroll Reveals ---
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.2 });
+        reveals.forEach(reveal => observer.observe(reveal));
+
+        // --- Wax Seal Letter Toggle ---
+        function toggleLetter() {
+            const envelope = document.getElementById('envelope');
+            envelope.classList.toggle('open');
+            if(envelope.classList.contains('open')) {
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#ffffff', '#c0c0c0'] });
             }
         }
 
-        function triggerRelease() {
-            isReleased = true;
-            document.body.classList.add('released');
-            
-            if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+        // --- 3D Tilt Effect ---
+        const container = document.getElementById('tilt-box');
+        document.addEventListener('mousemove', (e) => {
+            if(window.innerWidth > 768) { 
+                let xAxis = (window.innerWidth / 2 - e.pageX) / 30; 
+                let yAxis = (window.innerHeight / 2 - e.pageY) / 30;
+                container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+        document.addEventListener('mouseleave', () => container.style.transform = `rotateY(0deg) rotateX(0deg)`);
 
-            lantern.style.transition = 'transform 5s cubic-bezier(0.4, 0, 0.2, 1), opacity 5s ease-in';
-            lantern.style.transform = `translateX(-50%) translateY(-120vh) scale(0.3)`;
-            lantern.style.opacity = '0';
+        // --- Floating Sparkles/Hearts (Silver theme) ---
+        const heartEmojis = ['✨', '🤍', '💍', '✧'];
+        setInterval(() => {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.animationDuration = Math.random() * 3 + 5 + "s";
+            heart.innerText = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 8000);
+        }, 600);
 
-            setTimeout(() => {
-                lantern.style.display = 'none';
-            }, 5000);
+        // --- Live Counter ---
+        // CHANGE THIS TO THEIR WEDDING DATE! Format: YYYY-MM-DDTHH:MM:SS
+        const weddingDate = new Date('2001-06-24T00:00:00'); 
+        function updateCounter() {
+            const diff = new Date() - weddingDate;
+            document.getElementById('c-years').innerText = new Date().getFullYear() - weddingDate.getFullYear();
+            document.getElementById('c-days').innerText = Math.floor(diff / (1000 * 60 * 60 * 24)).toLocaleString();
+            document.getElementById('c-hours').innerText = Math.floor((diff / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+            document.getElementById('c-minutes').innerText = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+            document.getElementById('c-seconds').innerText = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
         }
-
-        lantern.addEventListener('touchstart', startSwipe, {passive: false});
-        lantern.addEventListener('mousedown', startSwipe);
-        window.addEventListener('touchmove', dragSwipe, {passive: false});
-        window.addEventListener('mousemove', dragSwipe);
-        window.addEventListener('touchend', endSwipe);
-        window.addEventListener('mouseup', endSwipe);
-        window.addEventListener('touchcancel', endSwipe);
-        window.addEventListener('contextmenu', e => e.preventDefault());
+        updateCounter();
+        setInterval(updateCounter, 1000);
     </script>
+
 </body>
 </html>
